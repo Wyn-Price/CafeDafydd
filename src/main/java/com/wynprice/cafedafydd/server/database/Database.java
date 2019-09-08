@@ -42,18 +42,10 @@ public abstract class Database {
         }
     }
 
-    public OptionalMap<String, String> getEntryFromId(int id) {
+    public Optional<FieldEntry> getEntryFromId(int id) {
         return this.entries.stream()
             .filter(arr -> arr.getPrimaryField() == id)
-            .map(entry -> {
-                OptionalMap<String, String> map = new OptionalMap<>(new HashMap<>());
-                for (int i = 1; i < this.fields.size(); i++) {
-                    map.put(this.fields.get(i), entry.getEntries()[i]);
-                }
-                return map;
-            })
-            .collect(UtilCollectors.toSingleEntry())
-            .orElse(OptionalMap.emptyMap());
+            .collect(UtilCollectors.toSingleEntry());
     }
 
     public Optional<Integer> getSingleIdFromEntry(String... aString) {
@@ -97,6 +89,14 @@ public abstract class Database {
         });
     }
 
+    public boolean generateIfNotPresent(String... aString) {
+        if(!this.hasAllEntries(aString)) {
+            this.generateAndAddDatabase(aString);
+            return true;
+        }
+        return false;
+    }
+
     public void writeToFile() {
         if(Files.notExists(this.path.getParent())) {
             try {
@@ -124,6 +124,10 @@ public abstract class Database {
 
         public String toFileString() {
             return this.primaryField + "," + String.join(",", this.entries);
+        }
+
+        public String getField(String field) {
+            return this.entries[Database.this.fields.indexOf(field)];
         }
     }
 }

@@ -3,37 +3,50 @@ package com.wynprice.cafedafydd.server.database;
 import com.wynprice.cafedafydd.server.PermissionLevel;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.Optional;
+
+import static com.wynprice.cafedafydd.common.DatabaseStrings.*;
+
 @Log4j2
 public abstract class Databases {
 
-    public static final Users USERS = new Users();
+    private Databases() {
+        //NO-OP
+    }
 
-    public static class Users extends Database {
+    public static final UserDatabase USERS = new UserDatabase();
+
+    public static final class UserDatabase extends Database {
 
         private static final String ADMIN_USERNAME = "admin";
         private static final String ADMIN_PASSWORD_HASH = "0503cde860c5c486b73cfd25e05bb5c54f75d4107225215e52148a6270c0aa3c";
+        private static final String ADMIN_EMAIL = "admin@cafedayfdd.com";
 
-        public Users() {
-            if(!this.hasAllEntries(USERNAME, ADMIN_USERNAME, PASSWORD_HASH, ADMIN_PASSWORD_HASH, PERMISSION_LEVEL, PermissionLevel.ADMINISTRATOR.name())) {
-                this.generateAndAddDatabase(USERNAME, ADMIN_USERNAME, PASSWORD_HASH, ADMIN_PASSWORD_HASH, PERMISSION_LEVEL, PermissionLevel.ADMINISTRATOR.name());
+        private UserDatabase() {
+            if(!this.generateIfNotPresent(Users.USERNAME, ADMIN_USERNAME, Users.PASSWORD_HASH, ADMIN_PASSWORD_HASH, Users.PERMISSION_LEVEL, PermissionLevel.ADMINISTRATOR.name(), Users.EMAIL, ADMIN_EMAIL)) {
                 this.writeToFile();
             }
         }
 
-        public static final String FILE_NAME = "users";
-
-        public static final String USERNAME = "username";
-        public static final String PASSWORD_HASH = "password_hash";
-        public static final String PERMISSION_LEVEL = "permission_level";
-
         @Override
         protected String getFilename() {
-            return FILE_NAME;
+            return Users.FILE_NAME;
         }
 
         @Override
         protected String[] getFields() {
-            return new String[] {USERNAME, PASSWORD_HASH, PERMISSION_LEVEL};
+            return new String[] {Users.USERNAME, Users.PASSWORD_HASH, Users.PERMISSION_LEVEL, Users.EMAIL};
         }
+    }
+
+    private static final Database[] DATABASES = new Database[]{ USERS };
+
+    public static Optional<Database> getFromFile(String fileName) {
+        for (Database database : DATABASES) {
+            if(fileName.equals(database.getFilename())) {
+                return Optional.of(database);
+            }
+        }
+        return Optional.empty();
     }
 }

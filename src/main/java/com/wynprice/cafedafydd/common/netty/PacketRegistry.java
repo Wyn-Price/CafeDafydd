@@ -1,8 +1,12 @@
 package com.wynprice.cafedafydd.common.netty;
 
 import com.wynprice.cafedafydd.common.netty.packets.PacketEntry;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketLoginIncorrect;
+import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
+import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayScreen;
+import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketHasDatabaseEntryResult;
+import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketHasDatabaseEntry;
 import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogin;
+import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogout;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
@@ -37,6 +41,10 @@ public enum PacketRegistry {
 
     static {
         INSTANCE.registerPacket(PacketLogin.class, PacketLogin::encode, PacketLogin::decode);
-        INSTANCE.registerPacket(PacketLoginIncorrect.class, PacketLoginIncorrect::encode, PacketLoginIncorrect::decode);
+        INSTANCE.registerPacket(PacketDisplayError.class, PacketDisplayError::encode, PacketDisplayError::decode);
+        INSTANCE.registerPacket(PacketLogout.class, emptyEncoder(), emptyDecoder(PacketLogout::new));
+        INSTANCE.registerPacket(PacketDisplayScreen.class, PacketDisplayScreen::encode, PacketDisplayScreen::decode);
+        INSTANCE.registerPacket(PacketHasDatabaseEntry.class, PacketHasDatabaseEntry::encode, PacketHasDatabaseEntry::decode);
+        INSTANCE.registerPacket(PacketHasDatabaseEntryResult.class, PacketHasDatabaseEntryResult::encode, PacketHasDatabaseEntryResult::decode);
     }
 }

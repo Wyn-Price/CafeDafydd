@@ -1,6 +1,8 @@
 package com.wynprice.cafedafydd.client;
 
+import com.wynprice.cafedafydd.client.controllers.BaseController;
 import com.wynprice.cafedafydd.client.netty.CafeDayfddClient;
+import com.wynprice.cafedafydd.common.Page;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -15,6 +17,9 @@ import java.util.Optional;
 @Log4j2
 public class CafeDafyddMain extends Application {
 
+    private static Stage stage;
+    private static BaseController controller;
+
     @Getter private static CafeDayfddClient client;
 
     public static void main(String[] args) {
@@ -24,23 +29,37 @@ public class CafeDafyddMain extends Application {
 
     @Override
     public void start(Stage stage) {
+        CafeDafyddMain.stage = stage;
         stage.setTitle("Cafe Dafydd");
-        stage.setScene(new Scene(getRoot(Page.MAIN_PAGE).orElseThrow(IllegalArgumentException::new), 500, 275));
+        stage.setScene(new Scene(getRoot(Page.LOGIN_PAGE).orElseThrow(IllegalArgumentException::new), 500, 275));
         stage.show();
 
-        stage.onCloseRequestProperty().set(event -> client.close());
+        stage.onCloseRequestProperty().set(event -> {
+            client.close();
+            System.exit(0);
+        });
     }
 
-    public static void showPage(Stage stage, Page page) {
-        getRoot(page).ifPresent(stage.getScene()::setRoot);
+    public static void showPage(Page page) {
+        getRoot(page).ifPresent(root -> stage.setScene(new Scene(root, 500, 275)));
+
     }
 
     private static Optional<Parent> getRoot(Page page) {
         try {
-            return Optional.ofNullable(new FXMLLoader(CafeDafyddMain.class.getResource("/pages/" + page.getFileName() + ".fxml")).load());
+            FXMLLoader loader = new FXMLLoader(CafeDafyddMain.class.getResource("/pages/" + page.getFileName() + ".fxml"));
+            Parent loaded = loader.load();
+            controller = loader.getController();
+            controller.onLoaded();
+            return Optional.ofNullable(loaded);
         } catch (IOException e) {
             log.error("Unable to load page " + page + " for file " + page.getFileName(), e);
             return Optional.empty();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> getController(Class<T> controllerClass) {
+        return controllerClass.isInstance(controller) ? Optional.of((T)controller) : Optional.empty();
     }
 }
