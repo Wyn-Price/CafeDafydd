@@ -20,7 +20,7 @@ public abstract class Database {
 
     private final List<FieldEntry> entries = new ArrayList<>();
 
-    private Database() {
+    protected Database() {
         this.fields = Arrays.asList(this.getFields());
         this.path = Paths.get("databases").resolve(this.getFilename() + ".csv");
 
