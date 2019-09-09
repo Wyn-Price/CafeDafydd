@@ -28,8 +28,4 @@ public class AdministratorPage implements BaseController {
     @FXML
     public void onEditStaffMember() {
     }
-
-    @FXML
-    public void goToStaffPanel() {
-    }
 }
