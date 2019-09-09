@@ -8,4 +8,5 @@ import lombok.Value;
 @EqualsAndHashCode(callSuper = true)
 public class PermissionException extends RuntimeException {
     private final PermissionLevel atLeast;
+    private final String operation;
 }

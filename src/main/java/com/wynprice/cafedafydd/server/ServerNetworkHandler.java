@@ -35,7 +35,7 @@ public class ServerNetworkHandler extends NetworkHandler {
         try {
             super.handlePacket(packet);
         } catch (PermissionException perm) {
-            this.sendPacket(new PacketDisplayError("Invalid perms", "Permissions are not sufficient. You have " + this.permission.name() + " and you need " + perm.getAtLeast()));
+            this.sendPacket(new PacketDisplayError("Invalid perms", "Permissions are not sufficient to do task: '" + perm.getOperation() + "'. You have " + this.permission.name() + " and you need " + perm.getAtLeast()));
         }
     }
 
@@ -63,7 +63,7 @@ public class ServerNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleDatabaseRequest(PacketHasDatabaseEntry hasEntry) {
-        this.ensurePerms(PermissionLevel.STAFF_MEMBER);
+        this.ensurePerms(PermissionLevel.STAFF_MEMBER, "Database Lookup");
         Optional<Database> fromFile = Databases.getFromFile(hasEntry.getDatabaseFile());
         if(fromFile.isPresent()) {
             Database database = fromFile.get();
@@ -73,9 +73,9 @@ public class ServerNetworkHandler extends NetworkHandler {
         }
     }
 
-    private void ensurePerms(PermissionLevel atLeast) {
+    private void ensurePerms(PermissionLevel atLeast, String operation) {
         if(this.permission.getPerIndex() < atLeast.getPerIndex()) {
-            throw new PermissionException(atLeast);
+            throw new PermissionException(atLeast, operation);
         }
     }
 }
