@@ -33,6 +33,6 @@ public class ClientNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleDatabaseRequestResult(PacketHasDatabaseEntryResult result) {
-        DatabaseCheck.receive(result.result());
+        DatabaseCheck.receive(result.requestID(), result.result());
     }
 }

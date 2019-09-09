@@ -13,6 +13,7 @@ import com.wynprice.cafedafydd.common.utils.NetworkHandle;
 import com.wynprice.cafedafydd.common.utils.NetworkHandleScanner;
 import com.wynprice.cafedafydd.server.database.Database;
 import com.wynprice.cafedafydd.server.database.Databases;
+import com.wynprice.cafedafydd.server.utils.PermissionException;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Optional;
@@ -66,7 +67,7 @@ public class ServerNetworkHandler extends NetworkHandler {
         Optional<Database> fromFile = Databases.getFromFile(hasEntry.getDatabaseFile());
         if(fromFile.isPresent()) {
             Database database = fromFile.get();
-            this.sendPacket(new PacketHasDatabaseEntryResult(database.hasAllEntries(hasEntry.getField(), hasEntry.getTestData())));
+            this.sendPacket(new PacketHasDatabaseEntryResult(hasEntry.getRequestID(), database.hasAllEntries(hasEntry.getField(), hasEntry.getTestData())));
         } else {
             log.error("Requested database file " + hasEntry.getDatabaseFile() + " but it could not be found. ");
         }

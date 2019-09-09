@@ -1,8 +1,11 @@
 package com.wynprice.cafedafydd.common.utils;
 
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
+import lombok.SneakyThrows;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,8 +30,11 @@ public class NetworkHandleScanner {
                     maps.put(method.getParameterTypes()[0], (network, packet) -> {
                         try {
                             method.invoke(network, packet);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                        } catch (InvocationTargetException e)  {
+                            throwException(e.getCause());
+                        }
+                        catch (Exception e) {
+                            throwException(e);
                         }
                     });
                 } else {
@@ -39,6 +45,11 @@ public class NetworkHandleScanner {
         }
         return (handle, packet) ->
             maps.getOrDefault(packet.getClass(), (h, o) -> new IllegalArgumentException("Do not know how to handle class" + packet.getClass())).accept(handle, packet);
+    }
+
+    @SneakyThrows
+    private static void throwException(Throwable e) {
+        throw e;
     }
 
 }
