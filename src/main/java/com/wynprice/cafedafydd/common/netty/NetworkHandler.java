@@ -1,14 +1,19 @@
 package com.wynprice.cafedafydd.common.netty;
 
+import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
 import io.netty.channel.*;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 @Log4j2
-public abstract class NetworkHandler extends SimpleChannelInboundHandler {
+@RequiredArgsConstructor
+public class NetworkHandler extends SimpleChannelInboundHandler {
+
+    private final NetworkConsumer networkConsumer;
 
     private final Queue<Object> handleQueue = new ArrayDeque<>();
     @Getter
@@ -20,8 +25,6 @@ public abstract class NetworkHandler extends SimpleChannelInboundHandler {
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
         this.handleQueue.add(msg);
     }
-
-    protected abstract void handlePacket(Object packet);
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -35,7 +38,7 @@ public abstract class NetworkHandler extends SimpleChannelInboundHandler {
                     while(!this.handleQueue.isEmpty()) {
                         Object packet = this.handleQueue.poll();
                         try {
-                            this.handlePacket(packet);
+                            this.networkConsumer.accept(this, packet);
                         } catch (Exception e) {
                             log.error("Error while handling packet " + packet, e);
                         }
@@ -78,4 +81,5 @@ public abstract class NetworkHandler extends SimpleChannelInboundHandler {
         ChannelFuture future = this.activeChannel.writeAndFlush(msg);
         future.addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
     }
+
 }

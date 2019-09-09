@@ -6,23 +6,33 @@ import com.wynprice.cafedafydd.common.netty.NetworkHandler;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayScreen;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketHasDatabaseEntryResult;
+import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
+import com.wynprice.cafedafydd.common.utils.NetworkHandle;
+import com.wynprice.cafedafydd.common.utils.NetworkHandleScanner;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
 public class ClientNetworkHandler extends NetworkHandler {
-    @Override
-    protected void handlePacket(Object packet) {
-        if(packet instanceof PacketDisplayError) {
-            PacketDisplayError error = (PacketDisplayError) packet;
-            Platform.runLater(() -> FXUtils.showBasicAlert(Alert.AlertType.ERROR, error.getTitle(), error.getReason(), ButtonType.OK));
-        }
-        if(packet instanceof PacketDisplayScreen) {
-            PacketDisplayScreen screen = (PacketDisplayScreen) packet;
-            Platform.runLater(() -> CafeDafyddMain.showPage(screen.getPage()));
-        }
-        if(packet instanceof PacketHasDatabaseEntryResult) {
-            DatabaseCheck.receive(((PacketHasDatabaseEntryResult) packet).result());
-        }
+
+    private static final NetworkConsumer CONSUMER = NetworkHandleScanner.generate(ClientNetworkHandler.class);
+
+    public ClientNetworkHandler() {
+        super(CONSUMER);
+    }
+
+    @NetworkHandle
+    public void handleDisplayError(PacketDisplayError error) {
+        Platform.runLater(() -> FXUtils.showBasicAlert(Alert.AlertType.ERROR, error.getTitle(), error.getReason(), ButtonType.OK));
+    }
+
+    @NetworkHandle
+    public void handleDisplayScreen(PacketDisplayScreen screen) {
+        Platform.runLater(() -> CafeDafyddMain.showPage(screen.getPage()));
+    }
+
+    @NetworkHandle
+    public void handleDatabaseRequestResult(PacketHasDatabaseEntryResult result) {
+        DatabaseCheck.receive(result.result());
     }
 }
