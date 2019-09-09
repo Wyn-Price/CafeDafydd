@@ -21,7 +21,7 @@ import static com.wynprice.cafedafydd.common.DatabaseStrings.Users;
 
 @Log4j2
 public class ServerNetworkHandler extends NetworkHandler {
-    private static final NetworkConsumer CONSUMER = NetworkHandleScanner.generate(ServerNetworkHandler.class);
+    private static final NetworkConsumer CONSUMER = NetworkHandleScanner.generateConsumer(ServerNetworkHandler.class);
     private int userID = -1;
     private PermissionLevel permission;
 

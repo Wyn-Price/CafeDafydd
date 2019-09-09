@@ -1,6 +1,8 @@
 package com.wynprice.cafedafydd.common.netty;
 
+import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
 import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
+import com.wynprice.cafedafydd.server.utils.PermissionException;
 import io.netty.channel.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,10 @@ public class NetworkHandler extends SimpleChannelInboundHandler {
         this.handleQueue.add(msg);
     }
 
+    protected void handlePacket(Object packet) {
+        this.networkConsumer.accept(this, packet);
+    }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
@@ -38,7 +44,7 @@ public class NetworkHandler extends SimpleChannelInboundHandler {
                     while(!this.handleQueue.isEmpty()) {
                         Object packet = this.handleQueue.poll();
                         try {
-                            this.networkConsumer.accept(this, packet);
+                            this.handlePacket(packet);
                         } catch (Exception e) {
                             log.error("Error while handling packet " + packet, e);
                         }

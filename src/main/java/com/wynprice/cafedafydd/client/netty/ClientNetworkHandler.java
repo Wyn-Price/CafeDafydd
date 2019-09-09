@@ -15,7 +15,7 @@ import javafx.scene.control.ButtonType;
 
 public class ClientNetworkHandler extends NetworkHandler {
 
-    private static final NetworkConsumer CONSUMER = NetworkHandleScanner.generate(ClientNetworkHandler.class);
+    private static final NetworkConsumer CONSUMER = NetworkHandleScanner.generateConsumer(ClientNetworkHandler.class);
 
     public ClientNetworkHandler() {
         super(CONSUMER);
