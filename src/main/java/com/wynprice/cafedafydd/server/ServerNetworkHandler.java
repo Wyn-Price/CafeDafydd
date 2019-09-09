@@ -29,6 +29,15 @@ public class ServerNetworkHandler extends NetworkHandler {
         super(CONSUMER);
     }
 
+    @Override
+    protected void handlePacket(Object packet) {
+        try {
+            super.handlePacket(packet);
+        } catch (PermissionException perm) {
+            this.sendPacket(new PacketDisplayError("Invalid perms", "Permissions are not sufficient. You have " + this.permission.name() + " and you need " + perm.getAtLeast()));
+        }
+    }
+
     @NetworkHandle
     public void handleLogin(PacketLogin login) {
         Optional<Integer> entry = Databases.USERS.getSingleIdFromEntry(Users.USERNAME, login.getUsername(), Users.PASSWORD_HASH, login.getPasswordHash());
@@ -63,6 +72,9 @@ public class ServerNetworkHandler extends NetworkHandler {
         }
     }
 
+    private void ensurePerms(PermissionLevel atLeast) {
+        if(this.permission.getPerIndex() < atLeast.getPerIndex()) {
+            throw new PermissionException(atLeast);
         }
     }
 }
