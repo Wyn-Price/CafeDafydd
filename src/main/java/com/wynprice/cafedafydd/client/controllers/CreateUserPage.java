@@ -1,9 +1,12 @@
 package com.wynprice.cafedafydd.client.controllers;
 
 import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
+import com.wynprice.cafedafydd.client.CafeDafyddMain;
+import com.wynprice.cafedafydd.client.netty.CafeDayfddClient;
 import com.wynprice.cafedafydd.client.netty.DatabaseCheck;
 import com.wynprice.cafedafydd.client.utils.FXUtils;
 import com.wynprice.cafedafydd.common.Images;
+import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketCreateUser;
 import com.wynprice.cafedafydd.common.utils.PasswordUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -114,6 +117,7 @@ public class CreateUserPage implements BaseController {
         }
         if(accepted) {
             log.info("Create new username {} with email {} and password hash {}", this.usernameField.getText(), this.emailField.getText(), PasswordUtils.genetatePasswordHash(this.usernameField.getText(), this.passwordField.getText()));
+            CafeDafyddMain.getClient().getHandler().sendPacket(new PacketCreateUser(this.usernameField.getText(), this.emailField.getText(), PasswordUtils.genetatePasswordHash(this.usernameField.getText(), this.passwordField.getText())));
         }
     }
 

@@ -5,6 +5,7 @@ import com.wynprice.cafedafydd.common.netty.NetworkHandler;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayScreen;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketHasDatabaseEntryResult;
+import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketCreateUser;
 import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketHasDatabaseEntry;
 import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogin;
 import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogout;
@@ -71,6 +72,17 @@ public class ServerNetworkHandler extends NetworkHandler {
         } else {
             log.error("Requested database file " + hasEntry.getDatabaseFile() + " but it could not be found. ");
         }
+    }
+
+    @NetworkHandle
+    public void handleCreateUser(PacketCreateUser createUser) {
+        this.ensurePerms(PermissionLevel.STAFF_MEMBER, "Create User");
+        if (Databases.USERS.hasAllEntries(Users.USERNAME, createUser.getUsername()) || Databases.USERS.hasAllEntries(Users.EMAIL, createUser.getEmail())) {
+            this.sendPacket(new PacketDisplayError("Creation Error", "Username or email already exists in database."));
+            return;
+        }
+        Databases.USERS.generateAndAddDatabase(Users.USERNAME, createUser.getUsername(), Users.EMAIL, createUser.getEmail(), Users.PASSWORD_HASH, createUser.getPasswordHash(), Users.PERMISSION_LEVEL, PermissionLevel.USER.name());
+        Databases.USERS.writeToFile();
     }
 
     private void ensurePerms(PermissionLevel atLeast, String operation) {
