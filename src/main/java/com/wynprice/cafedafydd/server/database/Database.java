@@ -1,7 +1,6 @@
 package com.wynprice.cafedafydd.server.database;
 
 import com.wynprice.cafedafydd.client.utils.UtilCollectors;
-import com.wynprice.cafedafydd.server.utils.OptionalMap;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 
@@ -10,11 +9,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Log4j2
 public abstract class Database {
+
+    private static final String ID = "id";
+
     private final List<String> fields;
     private final Path path;
 
@@ -26,11 +27,10 @@ public abstract class Database {
 
         if(Files.exists(this.path)) {
             try {
-                for (String line : Files.readAllLines(this.path)) {
-                    String[] arr = line.split(",");
-                    String[] readEntries = new String[arr.length - 1];
-                    System.arraycopy(arr, 1, readEntries, 0, readEntries.length);
-                    this.entries.add(new FieldEntry(Integer.parseInt(arr[0]), readEntries));
+                List<String> lines = Files.readAllLines(this.path);
+                List<String> fileFields = this.concat(new ArrayList<>(), lines.remove(0).split(","));
+                for (String line : lines) {
+                    this.parseLine(line, fileFields);
                 }
             } catch (IOException e) {
                 log.error("Unable to open csv file");
@@ -40,6 +40,72 @@ public abstract class Database {
         if(this.fields.isEmpty()) {
             throw new IllegalArgumentException("Need to specify the at least one field");
         }
+
+        this.writeToFile();
+    }
+
+    private void parseLine(String line, List<String> fileFields) {
+        List<String> idFields = this.concat(this.fields, ID);
+        List<String> arr = new ArrayList<>();
+        Collections.addAll(arr, line.split(","));
+        String[] readEntries = new String[this.fields.size()];
+        for (int i = 0; i < arr.size(); i++) {
+            if(i >= fileFields.size()) {
+                log.error("Too many fields on entry {}. Expected {}, got {}", line, fileFields.size(), arr.size());
+                return;
+            }
+            String field = fileFields.get(i);
+            String value = arr.get(i);
+            if(idFields.contains(field)) {
+                if(!field.equals(ID)) {
+                    readEntries[idFields.indexOf(field)] = value;
+                }
+            } else {
+                log.error("Field in {} contains field {} with value {} which doesn't exist in this database fields: {}", this.path, field, value, idFields);
+                return;
+            }
+        }
+        for (int i = 0; i < readEntries.length; i++) {
+            if(readEntries[i] == null) {
+                log.error("CVS file {} does not contain field {}", this.path, idFields.get(i));
+                return;
+            }
+        }
+
+        int id = Integer.parseInt(arr.get(fileFields.indexOf(ID)));
+
+        if(this.checkDuplicates(readEntries, id)) {
+            return;
+        }
+
+        this.entries.add(new FieldEntry(id, readEntries));
+    }
+
+    private boolean checkDuplicates(String[] readEntries, int id) {
+        //Check duplicates primary fields
+        for (String field : this.getPrimaryFields()) {
+            int index = this.fields.indexOf(field);
+            Optional<String[]> foundMatched = this.entries.stream().map(FieldEntry::getEntries).filter(a -> a[index].equals(readEntries[index])).findAny();
+
+            if(foundMatched.isPresent()) {
+                log.error("Found multiple entries with the same primary field {}: '{}' in file {}. Aborting found entry. Existing entry :{}, found entry {}", field, readEntries[index], this.path, Arrays.toString(foundMatched.get()), Arrays.toString(readEntries));
+                return true;
+            }
+        }
+
+
+        Optional<FieldEntry> foundMatched = this.entries.stream().filter(f -> f.getPrimaryField() == id).findAny();
+        if(foundMatched.isPresent()) {
+            log.error("Found multiple entries with the same id '{}' in file {}. Aborting found entry. Existing entry :{}, found entry {}", id, this.path, Arrays.toString(foundMatched.get().getEntries()), Arrays.toString(readEntries));
+            return true;
+        }
+        return false;
+    }
+
+    private List<String> concat(List<String> arr, String... added) {
+        List<String> newList = new ArrayList<>(arr);
+        Collections.addAll(newList, added);
+        return newList;
     }
 
     public Optional<FieldEntry> getEntryFromId(int id) {
@@ -107,7 +173,10 @@ public abstract class Database {
             }
         }
         try {
-            Files.write(this.path, this.entries.stream().map(FieldEntry::toFileString).collect(Collectors.toList()));
+            List<String> lines = new ArrayList<>();
+            lines.add(ID + "," + String.join(",", this.fields));
+            this.entries.stream().map(FieldEntry::toFileString).forEach(lines::add);
+            Files.write(this.path, lines);
         } catch (IOException e) {
             log.error("Unable to write database file " + this.path.getName(this.path.getNameCount() - 1), e);
         }
@@ -115,6 +184,10 @@ public abstract class Database {
 
     protected abstract String getFilename();
     protected abstract String[] getFields();
+
+    protected String[] getPrimaryFields() {
+        return new String[0];
+    }
 
 
     @Value

@@ -37,6 +37,11 @@ public abstract class Databases {
         protected String[] getFields() {
             return new String[] {Users.USERNAME, Users.PASSWORD_HASH, Users.PERMISSION_LEVEL, Users.EMAIL};
         }
+
+        @Override
+        protected String[] getPrimaryFields() {
+            return new String[] { Users.USERNAME, Users.EMAIL };
+        }
     }
 
     private static final Database[] DATABASES = new Database[]{ USERS };
