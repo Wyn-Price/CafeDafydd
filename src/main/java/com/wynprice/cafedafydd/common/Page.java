@@ -5,6 +5,7 @@ import lombok.Getter;
 public enum Page {
     LOGIN_PAGE("login_page"),
     USER_PAGE("user_page"),
+    CHANGE_PASSWORD("change_password_page"),
 
     ADD_USER_PAGE("create_user"),
 

@@ -2,13 +2,11 @@ package com.wynprice.cafedafydd.server;
 
 import com.wynprice.cafedafydd.common.Page;
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
+import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketConfirmLogin;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayScreen;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketHasDatabaseEntryResult;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketCreateUser;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketHasDatabaseEntry;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogin;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogout;
+import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.*;
 import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
 import com.wynprice.cafedafydd.common.utils.NetworkHandle;
 import com.wynprice.cafedafydd.common.utils.NetworkHandleScanner;
@@ -36,24 +34,31 @@ public class ServerNetworkHandler extends NetworkHandler {
         try {
             super.handlePacket(packet);
         } catch (PermissionException perm) {
-            this.sendPacket(new PacketDisplayError("Invalid perms", "Permissions are not sufficient to do task: '" + perm.getOperation() + "'. You have " + this.permission.name() + " and you need " + perm.getAtLeast()));
+            this.sendPacket(new PacketDisplayError("Invalid perms", "Permissions are not sufficient to do task: '" + perm.getOperation() + "'. You have " + (this.permission != null ? this.permission.name() : "[NONE?]") + " and you need " + perm.getAtLeast()));
         }
     }
 
     @NetworkHandle
     public void handleLogin(PacketLogin login) {
-        Optional<Integer> entry = Databases.USERS.getSingleIdFromEntry(Users.USERNAME, login.getUsername(), Users.PASSWORD_HASH, login.getPasswordHash());
+        Optional<Database.FieldEntry> entry = Databases.USERS.getSingleIdFromEntry(Users.USERNAME, login.getUsername(), Users.PASSWORD_HASH, login.getPasswordHash());
         if(!entry.isPresent()) {
             this.sendPacket(new PacketDisplayError("Invalid Credentials", "Username or Password is incorrect.\nPlease contact a member of staff to change your password"));
             return;
         }
-        this.userID = entry.get();
-        this.permission = PermissionLevel.valueOf(Databases.USERS.getEntryFromId(this.userID).orElseThrow(NullPointerException::new).getField(Users.PERMISSION_LEVEL));
+        this.userID = entry.get().getPrimaryField();
+        this.permission = PermissionLevel.valueOf(entry.get().getField(Users.PERMISSION_LEVEL));
         Databases.USERS.writeToFile();
 
-        if (this.permission == PermissionLevel.ADMINISTRATOR) {
-            this.sendPacket(new PacketDisplayScreen(Page.ADMINISTRATOR_PAGE));
+        switch (this.permission) {
+            case USER:
+            case STAFF_MEMBER:
+                this.sendPacket(new PacketDisplayScreen(Page.USER_PAGE));
+                break;
+            case ADMINISTRATOR:
+                this.sendPacket(new PacketDisplayScreen(Page.ADMINISTRATOR_PAGE));
+                break;
         }
+        this.sendPacket(new PacketConfirmLogin(entry.get().getField(Users.USERNAME)));
     }
 
     @NetworkHandle
@@ -85,8 +90,24 @@ public class ServerNetworkHandler extends NetworkHandler {
         Databases.USERS.writeToFile();
     }
 
+    @NetworkHandle
+    public void handleChangePassword(PacketChangePassword packet) {
+        Optional<Database.FieldEntry> entry = Databases.USERS.getEntryFromId(this.userID);
+        if(!entry.isPresent()) {
+            this.sendPacket(new PacketDisplayError("Invalid Entry-point", "Need to log in before you can change password"));
+            return;
+        }
+        if(!entry.get().getField(Users.PASSWORD_HASH).equals(packet.getCurrentPasswordHash())) {
+            this.sendPacket(new PacketDisplayError("Invalid Password", "Current password is incorrect.\nIf you have forgotten your password speak to a member of staff."));
+            return;
+        }
+        entry.get().setField(Users.PASSWORD_HASH, packet.getNewPasswordHash());
+        this.sendPacket(new PacketDisplayScreen(Page.USER_PAGE));
+
+    }
+
     private void ensurePerms(PermissionLevel atLeast, String operation) {
-        if(this.permission.getPerIndex() < atLeast.getPerIndex()) {
+        if(this.permission == null || this.permission.getPerIndex() < atLeast.getPerIndex()) {
             throw new PermissionException(atLeast, operation);
         }
     }

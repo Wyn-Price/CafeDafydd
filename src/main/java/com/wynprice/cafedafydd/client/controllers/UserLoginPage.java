@@ -12,8 +12,12 @@ public class UserLoginPage implements BaseController {
     @FXML public Button okayButton;
 
     @FXML
-    public void enterButtonClicked(ActionEvent actionEvent) {
-        CafeDafyddMain.getClient().getHandler().sendPacket(new PacketLogout());
-        CafeDafyddMain.showPage(Page.LOGIN_PAGE);
+    public void enterButtonClicked() {
+        CafeDafyddMain.getClient().logout();
+    }
+
+    @FXML
+    public void changePasswordClicked() {
+        CafeDafyddMain.showPage(Page.CHANGE_PASSWORD);
     }
 }

@@ -1,8 +1,11 @@
 package com.wynprice.cafedafydd.client.netty;
 
+import com.wynprice.cafedafydd.client.CafeDafyddMain;
+import com.wynprice.cafedafydd.common.Page;
 import com.wynprice.cafedafydd.common.netty.NetworkDataDecoder;
 import com.wynprice.cafedafydd.common.netty.NetworkDataEncoder;
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
+import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogout;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -13,7 +16,7 @@ import lombok.Getter;
 
 public class CafeDayfddClient {
 
-    @Getter private final NetworkHandler handler;
+    @Getter private final ClientNetworkHandler handler;
 
     private final ChannelFuture endpoint;
 
@@ -35,5 +38,11 @@ public class CafeDayfddClient {
 
     public void close() {
         this.endpoint.channel().close().syncUninterruptibly();
+    }
+
+    public void logout() {
+        this.handler.setCurrentUsername(null);
+        this.handler.sendPacket(new PacketLogout());
+        CafeDafyddMain.showPage(Page.LOGIN_PAGE);
     }
 }

@@ -2,14 +2,12 @@ package com.wynprice.cafedafydd.client.controllers;
 
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.common.Page;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogout;
 import javafx.fxml.FXML;
 
 public class AdministratorPage implements BaseController {
     @FXML
     public void onLogout() {
-        CafeDafyddMain.getClient().getHandler().sendPacket(new PacketLogout());
-        CafeDafyddMain.showPage(Page.LOGIN_PAGE);
+        CafeDafyddMain.getClient().logout();
     }
 
     @FXML

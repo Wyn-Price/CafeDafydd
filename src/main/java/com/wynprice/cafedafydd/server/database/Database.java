@@ -114,18 +114,18 @@ public abstract class Database {
             .collect(UtilCollectors.toSingleEntry());
     }
 
-    public Optional<Integer> getSingleIdFromEntry(String... aString) {
+    public Optional<FieldEntry> getSingleIdFromEntry(String... aString) {
         return this.getIdsFromEntries(aString).collect(UtilCollectors.toSingleEntry());
     }
 
-    public Stream<Integer> getIdsFromEntries(String... aString) {
+    public Stream<FieldEntry> getIdsFromEntries(String... aString) {
         return this.entries.stream().filter(fieldEntry -> {
             boolean value = true;
             for (int i = 0; i < aString.length; i+=2) {
                 value &= fieldEntry.getEntries()[this.fields.indexOf(aString[i])].equals(aString[i + 1]);
             }
             return value;
-        }).map(FieldEntry::getPrimaryField);
+        });
     }
 
     public FieldEntry generateAndAddDatabase(String... formatFields) {
@@ -134,7 +134,7 @@ public abstract class Database {
                 + ". Input data should be in the format: `<KEY1>, <VALUE1>, <KEY2>, <VALUE2>...`");
         }
         String[] entry = new String[this.fields.size()];
-        int newId = this.entries.stream().map(FieldEntry::getPrimaryField).mapToInt(i -> i).max().orElse(0);
+        int newId = this.entries.stream().map(FieldEntry::getPrimaryField).mapToInt(i -> i).max().orElse(0) + 1;
 
         for (int i = 0; i < formatFields.length; i+=2) {
             entry[this.fields.indexOf(formatFields[i])] = formatFields[i + 1];
@@ -201,6 +201,10 @@ public abstract class Database {
 
         public String getField(String field) {
             return this.entries[Database.this.fields.indexOf(field)];
+        }
+
+        public void setField(String field, String value) {
+             this.entries[Database.this.fields.indexOf(field)] = value;
         }
     }
 }

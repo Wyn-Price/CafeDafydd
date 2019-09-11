@@ -16,7 +16,8 @@
 
 <GridPane alignment="CENTER" hgap="10.0" vgap="10.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="com.wynprice.cafedafydd.client.controllers.UserLoginPage">
   <columnConstraints>
-    <ColumnConstraints halignment="LEFT" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" />
+    <ColumnConstraints halignment="LEFT" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+    <ColumnConstraints halignment="LEFT" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
   </columnConstraints>
   <padding>
     <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
@@ -28,23 +29,29 @@
     <RowConstraints maxHeight="80.0" prefHeight="80.0" />
   </rowConstraints>
   <!-- Add Header Label -->
-  <Label text="Welcome To Cafe Dafydd!" GridPane.columnIndex="0" GridPane.columnSpan="1" GridPane.halignment="CENTER" GridPane.rowIndex="0" GridPane.rowSpan="1">
+  <Label text="Welcome To Cafe Dafydd!" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="0" GridPane.rowSpan="1">
     <font>
-      <Font name="Arial" size="24.0"/>
+      <Font name="Arial" size="24.0" />
     </font>
     <GridPane.margin>
       <Insets bottom="20.0" top="20.0" />
     </GridPane.margin>
   </Label>
   <!-- Add Submit Button -->
-  <Button defaultButton="true" fx:id="okayButton" onAction="#enterButtonClicked" prefHeight="40.0" prefWidth="100.0" text="Enter" GridPane.columnIndex="0" GridPane.columnSpan="1" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.rowSpan="1">
+  <Button fx:id="okayButton" defaultButton="true" onAction="#enterButtonClicked" prefHeight="40.0" prefWidth="100.0" text="Log Out" GridPane.columnIndex="0" GridPane.columnSpan="1" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.rowSpan="1">
     <GridPane.margin>
       <Insets bottom="20.0" top="20.0" />
     </GridPane.margin>
   </Button>
-  <Label text="Hours remaining:" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER">
+  <Label text="Hours remaining:" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER">
     <font>
       <Font size="12.0" />
     </font>
   </Label>
+  <!-- Add Submit Button -->
+  <Button id="okayButton" defaultButton="true" onAction="#changePasswordClicked" prefHeight="40.0" prefWidth="140.0" text="Change Password" GridPane.columnIndex="1" GridPane.columnSpan="1" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.rowSpan="1">
+    <GridPane.margin>
+      <Insets bottom="20.0" top="20.0" />
+    </GridPane.margin>
+  </Button>
 </GridPane>

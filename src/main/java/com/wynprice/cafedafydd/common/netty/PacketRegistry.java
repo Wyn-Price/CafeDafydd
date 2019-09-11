@@ -1,13 +1,11 @@
 package com.wynprice.cafedafydd.common.netty;
 
 import com.wynprice.cafedafydd.common.netty.packets.PacketEntry;
+import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketConfirmLogin;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayScreen;
 import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketHasDatabaseEntryResult;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketCreateUser;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketHasDatabaseEntry;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogin;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketLogout;
+import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.*;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
@@ -48,5 +46,7 @@ public enum PacketRegistry {
         INSTANCE.registerPacket(PacketHasDatabaseEntry.class, PacketHasDatabaseEntry::encode, PacketHasDatabaseEntry::decode);
         INSTANCE.registerPacket(PacketHasDatabaseEntryResult.class, PacketHasDatabaseEntryResult::encode, PacketHasDatabaseEntryResult::decode);
         INSTANCE.registerPacket(PacketCreateUser.class, PacketCreateUser::encode, PacketCreateUser::decode);
+        INSTANCE.registerPacket(PacketConfirmLogin.class, PacketConfirmLogin::encode, PacketConfirmLogin::decode);
+        INSTANCE.registerPacket(PacketChangePassword.class, PacketChangePassword::encode, PacketChangePassword::decode);
     }
 }
