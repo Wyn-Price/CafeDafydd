@@ -2,11 +2,9 @@ package com.wynprice.cafedafydd.server;
 
 import com.wynprice.cafedafydd.common.Page;
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketConfirmLogin;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayError;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayScreen;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketHasDatabaseEntryResult;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.*;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.*;
+import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
 import com.wynprice.cafedafydd.common.utils.NetworkHandle;
 import com.wynprice.cafedafydd.common.utils.NetworkHandleScanner;
@@ -15,7 +13,10 @@ import com.wynprice.cafedafydd.server.database.Databases;
 import com.wynprice.cafedafydd.server.utils.PermissionException;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.wynprice.cafedafydd.common.DatabaseStrings.Users;
 
@@ -40,7 +41,7 @@ public class ServerNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleLogin(PacketLogin login) {
-        Optional<Database.FieldEntry> entry = Databases.USERS.getSingleIdFromEntry(Users.USERNAME, login.getUsername(), Users.PASSWORD_HASH, login.getPasswordHash());
+        Optional<DatabaseRecord> entry = Databases.USERS.getSingleEntry(Users.USERNAME, login.getUsername(), Users.PASSWORD_HASH, login.getPasswordHash());
         if(!entry.isPresent()) {
             this.sendPacket(new PacketDisplayError("Invalid Credentials", "Username or Password is incorrect.\nPlease contact a member of staff to change your password"));
             return;
@@ -52,11 +53,12 @@ public class ServerNetworkHandler extends NetworkHandler {
         switch (this.permission) {
             case USER:
             case STAFF_MEMBER:
+            case ADMINISTRATOR:
                 this.sendPacket(new PacketDisplayScreen(Page.USER_PAGE));
                 break;
-            case ADMINISTRATOR:
-                this.sendPacket(new PacketDisplayScreen(Page.ADMINISTRATOR_PAGE));
-                break;
+//            case ADMINISTRATOR:
+//                this.sendPacket(new PacketDisplayScreen(Page.ADMINISTRATOR_PAGE));
+//                break;
         }
         this.sendPacket(new PacketConfirmLogin(entry.get().getField(Users.USERNAME)));
     }
@@ -73,7 +75,7 @@ public class ServerNetworkHandler extends NetworkHandler {
         Optional<Database> fromFile = Databases.getFromFile(hasEntry.getDatabaseFile());
         if(fromFile.isPresent()) {
             Database database = fromFile.get();
-            this.sendPacket(new PacketHasDatabaseEntryResult(hasEntry.getRequestID(), database.hasAllEntries(hasEntry.getField(), hasEntry.getTestData())));
+            this.sendPacket(new PacketHasDatabaseEntryResult(hasEntry.getRequestID(), database.hasAllEntries(parseForm(hasEntry.getForm()))));
         } else {
             log.error("Requested database file " + hasEntry.getDatabaseFile() + " but it could not be found. ");
         }
@@ -92,7 +94,7 @@ public class ServerNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleChangePassword(PacketChangePassword packet) {
-        Optional<Database.FieldEntry> entry = Databases.USERS.getEntryFromId(this.userID);
+        Optional<DatabaseRecord> entry = Databases.USERS.getEntryFromId(this.userID);
         if(!entry.isPresent()) {
             this.sendPacket(new PacketDisplayError("Invalid Entry-point", "Need to log in before you can change password"));
             return;
@@ -104,6 +106,21 @@ public class ServerNetworkHandler extends NetworkHandler {
         entry.get().setField(Users.PASSWORD_HASH, packet.getNewPasswordHash());
         this.sendPacket(new PacketDisplayScreen(Page.USER_PAGE));
 
+    }
+
+    @NetworkHandle
+    public void handleDatabaseEntriesRequest(PacketGetDatabaseEntries packet) {
+        Optional<Database> database = Databases.getFromFile(packet.getDatabase());
+        if(!database.isPresent()) {
+            this.sendPacket(new PacketDisplayError("Invalid Database " + packet.getDatabase(), "Database " + packet.getDatabase() + " doesn't exist." ));
+            return;
+        }
+        Database db = database.get();
+        this.sendPacket(new PacketDatabaseEntriesResult(packet.getRequestID(), db.getFieldList(), db.getEntries(parseForm(packet.getRequestForm())).collect(Collectors.toList())));
+    }
+
+    private String[] parseForm(String... form) {
+        return Arrays.stream(form).map(s -> s.replaceAll("\\Q$$userid\\E", String.valueOf(this.userID))).toArray(String[]::new);
     }
 
     private void ensurePerms(PermissionLevel atLeast, String operation) {

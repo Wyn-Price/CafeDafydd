@@ -1,7 +1,7 @@
 package com.wynprice.cafedafydd.client.controllers;
 
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
-import com.wynprice.cafedafydd.client.netty.DatabaseCheck;
+import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
 import com.wynprice.cafedafydd.common.Images;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketCreateUser;
 import com.wynprice.cafedafydd.common.utils.PasswordUtils;
@@ -44,14 +44,14 @@ public class CreateUserPage implements BaseController {
                 this.errorField.setText("Username must be at least 5 characters.");
                 this.usernameImage.setImage(Images.RED_CROSS.getImage());
             } else {
-                DatabaseCheck.checkDatabase(Users.FILE_NAME, Users.USERNAME, newValue, result -> Platform.runLater(() -> {
+                DatabaseRequest.HAS_ENTRY.sendRequest(Users.FILE_NAME, result -> Platform.runLater(() -> {
                     this.usernameImage.setImage(getImage(!result));
                     if(result) {
                         this.errorField.setText("Username is taken");
                     } else {
                         this.errorField.setText("");
                     }
-                }));
+                }), Users.USERNAME, newValue);
             }
         });
 
@@ -61,14 +61,14 @@ public class CreateUserPage implements BaseController {
                 this.errorField.setText("Invalid email");
                 this.emailImage.setImage(Images.RED_CROSS.getImage());
             } else {
-                DatabaseCheck.checkDatabase(Users.FILE_NAME, Users.EMAIL, newValue, result -> Platform.runLater(() -> {
+                DatabaseRequest.HAS_ENTRY.sendRequest(Users.FILE_NAME, result -> Platform.runLater(() -> {
                     this.emailImage.setImage(getImage(!result));
                     if(result) {
                         this.errorField.setText("Email is already registered to an account. Contact a member of staff for a password reset");
                     } else {
                         this.errorField.setText("");
                     }
-                }));
+                }), Users.EMAIL, newValue);
             }
         });
 

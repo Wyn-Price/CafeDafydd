@@ -15,6 +15,8 @@ public abstract class Databases {
     }
 
     public static final UserDatabase USERS = new UserDatabase();
+    public static final SessionsDatabase SESSIONS = new SessionsDatabase();
+    public static final ComputersDatabase COMPUTERS = new ComputersDatabase();
 
     public static final class UserDatabase extends Database {
 
@@ -44,7 +46,38 @@ public abstract class Databases {
         }
     }
 
-    private static final Database[] DATABASES = new Database[]{ USERS };
+    public static final class SessionsDatabase extends Database {
+
+        @Override
+        protected String getFilename() {
+            return Sessions.FILE_NAME;
+        }
+
+        @Override
+        protected String[] getFields() {
+            return new String[]{ Sessions.USER_ID, Sessions.COMPUTER_ID, Sessions.ISO8601_START, Sessions.ISO8601_END };
+        }
+
+        @Override
+        protected String[] getPrimaryFields() {
+            return new String[]{ Sessions.COMPUTER_ID };
+        }
+    }
+
+    public static final class ComputersDatabase extends Database {
+
+        @Override
+        protected String getFilename() {
+            return Computers.FILE_NAME;
+        }
+
+        @Override
+        protected String[] getFields() {
+            return new String[]{ Computers.OS };
+        }
+    }
+
+    private static final Database[] DATABASES = new Database[]{ USERS, SESSIONS, COMPUTERS };
 
     public static Optional<Database> getFromFile(String fileName) {
         for (Database database : DATABASES) {

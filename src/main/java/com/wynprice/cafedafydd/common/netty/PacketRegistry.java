@@ -1,10 +1,7 @@
 package com.wynprice.cafedafydd.common.netty;
 
 import com.wynprice.cafedafydd.common.netty.packets.PacketEntry;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketConfirmLogin;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayError;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayScreen;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketHasDatabaseEntryResult;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.*;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.*;
 import io.netty.buffer.ByteBuf;
 
@@ -48,5 +45,7 @@ public enum PacketRegistry {
         INSTANCE.registerPacket(PacketCreateUser.class, PacketCreateUser::encode, PacketCreateUser::decode);
         INSTANCE.registerPacket(PacketConfirmLogin.class, PacketConfirmLogin::encode, PacketConfirmLogin::decode);
         INSTANCE.registerPacket(PacketChangePassword.class, PacketChangePassword::encode, PacketChangePassword::decode);
+        INSTANCE.registerPacket(PacketGetDatabaseEntries.class, PacketGetDatabaseEntries::encode, PacketGetDatabaseEntries::decode);
+        INSTANCE.registerPacket(PacketDatabaseEntriesResult.class, PacketDatabaseEntriesResult::encode, PacketDatabaseEntriesResult::decode);
     }
 }

@@ -4,10 +4,7 @@ import com.sun.istack.internal.Nullable;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.utils.FXUtils;
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketConfirmLogin;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayError;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayScreen;
-import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketHasDatabaseEntryResult;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.*;
 import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
 import com.wynprice.cafedafydd.common.utils.NetworkHandle;
 import com.wynprice.cafedafydd.common.utils.NetworkHandleScanner;
@@ -42,7 +39,12 @@ public class ClientNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleDatabaseRequestResult(PacketHasDatabaseEntryResult result) {
-        DatabaseCheck.receive(result.requestID(), result.result());
+        DatabaseRequest.HAS_ENTRY.receive(result.requestID(), result.result());
+    }
+
+    @NetworkHandle
+    public void handleDatabaseRequestEntriesResult(PacketDatabaseEntriesResult packet) {
+        DatabaseRequest.GET_ENTRIES.receive(packet.getRequestID(), packet.getRecords());
     }
 
     @NetworkHandle
