@@ -2,7 +2,7 @@ package com.wynprice.cafedafydd.client.controllers;
 
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.utils.FXUtils;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketChangePassword;
+import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketChangePassword;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 

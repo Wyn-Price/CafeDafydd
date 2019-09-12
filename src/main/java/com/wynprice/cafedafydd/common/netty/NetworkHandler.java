@@ -1,8 +1,6 @@
 package com.wynprice.cafedafydd.common.netty;
 
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
 import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
-import com.wynprice.cafedafydd.server.utils.PermissionException;
 import io.netty.channel.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

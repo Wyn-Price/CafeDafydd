@@ -2,11 +2,11 @@ package com.wynprice.cafedafydd.server;
 
 import com.wynprice.cafedafydd.common.Page;
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketConfirmLogin;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayScreen;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketHasDatabaseEntryResult;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.*;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketConfirmLogin;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayError;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayScreen;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketHasDatabaseEntryResult;
+import com.wynprice.cafedafydd.common.netty.packets.serverbound.*;
 import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
 import com.wynprice.cafedafydd.common.utils.NetworkHandle;
 import com.wynprice.cafedafydd.common.utils.NetworkHandleScanner;

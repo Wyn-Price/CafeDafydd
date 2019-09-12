@@ -1,4 +1,4 @@
-package com.wynprice.cafedafydd.common.netty.packets.packets.clientbound;
+package com.wynprice.cafedafydd.common.netty.packets.clientbound;
 
 import io.netty.buffer.ByteBuf;
 import lombok.Value;

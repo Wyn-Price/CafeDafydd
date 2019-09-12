@@ -1,19 +1,15 @@
 package com.wynprice.cafedafydd.client.controllers;
 
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
-import com.wynprice.cafedafydd.client.netty.CafeDayfddClient;
 import com.wynprice.cafedafydd.client.netty.DatabaseCheck;
-import com.wynprice.cafedafydd.client.utils.FXUtils;
 import com.wynprice.cafedafydd.common.Images;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketCreateUser;
+import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketCreateUser;
 import com.wynprice.cafedafydd.common.utils.PasswordUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;

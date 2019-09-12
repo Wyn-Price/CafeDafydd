@@ -1,7 +1,7 @@
 package com.wynprice.cafedafydd.client.netty;
 
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.PacketHasDatabaseEntry;
+import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketHasDatabaseEntry;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.HashMap;

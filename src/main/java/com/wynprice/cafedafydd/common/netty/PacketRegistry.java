@@ -1,11 +1,11 @@
 package com.wynprice.cafedafydd.common.netty;
 
 import com.wynprice.cafedafydd.common.netty.packets.PacketEntry;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketConfirmLogin;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayError;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketDisplayScreen;
-import com.wynprice.cafedafydd.common.netty.packets.packets.clientbound.PacketHasDatabaseEntryResult;
-import com.wynprice.cafedafydd.common.netty.packets.packets.serverbound.*;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketConfirmLogin;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayError;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketDisplayScreen;
+import com.wynprice.cafedafydd.common.netty.packets.clientbound.PacketHasDatabaseEntryResult;
+import com.wynprice.cafedafydd.common.netty.packets.serverbound.*;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;

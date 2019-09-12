@@ -1,4 +1,4 @@
-package com.wynprice.cafedafydd.common.netty.packets.packets.serverbound;
+package com.wynprice.cafedafydd.common.netty.packets.serverbound;
 
 import com.wynprice.cafedafydd.common.utils.ByteBufUtils;
 import io.netty.buffer.ByteBuf;
