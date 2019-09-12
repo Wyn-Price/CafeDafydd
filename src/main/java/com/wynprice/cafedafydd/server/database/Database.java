@@ -46,8 +46,7 @@ public abstract class Database {
 
     private void parseLine(String line, List<String> fileFields) {
         List<String> idFields = this.concat(this.fields, ID);
-        List<String> arr = new ArrayList<>();
-        Collections.addAll(arr, line.split(","));
+        List<String> arr = this.concat(new ArrayList<>(), line.split(","));
         String[] readEntries = new String[this.fields.size()];
         for (int i = 0; i < arr.size(); i++) {
             if(i >= fileFields.size()) {
