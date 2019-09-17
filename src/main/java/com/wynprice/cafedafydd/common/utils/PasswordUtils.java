@@ -8,14 +8,14 @@ import java.security.SecureRandom;
 
 public class PasswordUtils {
 
-    private static final MessageDigest MD5 = getDigest();
+    private static final MessageDigest SHA256 = getDigest();
 
     public static String genetatePasswordHash(String username, String password) {
         SecureRandom rand = new SecureRandom((username + password).getBytes());
         byte[] abyte = new byte[256];
         rand.nextBytes(abyte);
 
-        return bytesToHex(MD5.digest(abyte));
+        return bytesToHex(SHA256.digest(abyte));
     }
 
     public static String bytesToHex(byte[] hash) {
