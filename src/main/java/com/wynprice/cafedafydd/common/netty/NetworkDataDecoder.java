@@ -12,5 +12,6 @@ public class NetworkDataDecoder extends ByteToMessageDecoder {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         PacketEntry<?> entry = PacketRegistry.INSTANCE.getEntry(in.readByte());
         out.add(entry.getDecoder().apply(in));
+        in.release();
     }
 }
