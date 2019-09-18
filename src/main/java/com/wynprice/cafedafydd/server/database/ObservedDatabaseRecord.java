@@ -15,5 +15,6 @@ public class ObservedDatabaseRecord extends DatabaseRecord {
     public void setField(String field, String value) {
         super.setField(field, value);
         this.database.writeToFile();
+        this.database.reindexEntryField(this, field);
     }
 }

@@ -3,7 +3,7 @@ package com.wynprice.cafedafydd.server.database;
 import com.wynprice.cafedafydd.client.utils.UtilCollectors;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
-import lombok.Value;
+import com.wynprice.cafedafydd.server.utils.Algorithms;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
@@ -22,6 +22,8 @@ public abstract class Database {
     private final Path path;
 
     private final List<DatabaseRecord> entries = new ArrayList<>();
+
+    private final Map<String, List<DatabaseRecord>> indexedRecords = new HashMap<>();
 
     protected Database() {
         this.fields = Arrays.asList(this.getFields());
@@ -44,6 +46,21 @@ public abstract class Database {
         }
 
         this.writeToFile();
+
+        this.reindexAll();
+    }
+
+    private void reindexAll() {
+        for (String field : this.fields) {
+            this.indexedRecords.put(field, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> r.getField(field))));
+        }
+    }
+
+    //Remove the record from the indexed records and insert it
+    void reindexEntryField(DatabaseRecord record, String field) {
+        List<DatabaseRecord> list = this.indexedRecords.get(field);
+        list.remove(record);
+        Algorithms.insert(list, record, Comparator.comparing(r -> r.getField(field)));
     }
 
     private void parseLine(String line, List<String> fileFields) {
