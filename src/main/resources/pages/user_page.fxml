@@ -47,7 +47,7 @@
       <Insets bottom="20.0" top="20.0" />
     </GridPane.margin>
   </Button>
-  <ListView fx:id="sessionList" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+  <ListView fx:id="sessionList" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="3" />
   <GridPane id="deleteButton" prefHeight="39.999900000002526" GridPane.columnIndex="1" GridPane.rowIndex="2">
     <Button alignment="CENTER" defaultButton="true" minWidth="20.0" onAction="#addSessionButton" prefHeight="32.0" prefWidth="32.0" text="+" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
     <Button fx:id="deleteButton" alignment="CENTER" defaultButton="true" disable="true" minWidth="20.0" onAction="#removeSessionButton" prefHeight="32.0" prefWidth="32.0" text="-" GridPane.columnIndex="0" GridPane.halignment="RIGHT" GridPane.rowIndex="0" />
