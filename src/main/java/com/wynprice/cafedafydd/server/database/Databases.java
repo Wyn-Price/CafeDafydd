@@ -14,11 +14,11 @@ public abstract class Databases {
         //NO-OP
     }
 
-    public static final UserDatabase USERS = new UserDatabase();
-    public static final SessionsDatabase SESSIONS = new SessionsDatabase();
-    public static final ComputersDatabase COMPUTERS = new ComputersDatabase();
+    public static final Database USERS = new UserDatabase();
+    public static final Database SESSIONS = new SessionsDatabase();
+    public static final Database COMPUTERS = new ComputersDatabase();
 
-    public static final class UserDatabase extends Database {
+    private static final class UserDatabase extends Database {
 
         private static final String ADMIN_USERNAME = "admin";
         private static final String ADMIN_PASSWORD_HASH = "0503cde860c5c486b73cfd25e05bb5c54f75d4107225215e52148a6270c0aa3c";
@@ -46,7 +46,7 @@ public abstract class Databases {
         }
     }
 
-    public static final class SessionsDatabase extends Database {
+    private static final class SessionsDatabase extends Database {
 
         @Override
         protected String getFilename() {
@@ -60,11 +60,11 @@ public abstract class Databases {
 
         @Override
         protected String[] getPrimaryFields() {
-            return new String[]{ Sessions.COMPUTER_ID };
+            return new String[0];
         }
     }
 
-    public static final class ComputersDatabase extends Database {
+    private static final class ComputersDatabase extends Database {
 
         @Override
         protected String getFilename() {
@@ -73,7 +73,7 @@ public abstract class Databases {
 
         @Override
         protected String[] getFields() {
-            return new String[]{ Computers.OS };
+            return new String[]{ Computers.OS, Computers.SESSION_ID };
         }
     }
 

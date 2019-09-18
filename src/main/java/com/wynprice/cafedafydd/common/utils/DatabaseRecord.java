@@ -1,14 +1,23 @@
 package com.wynprice.cafedafydd.common.utils;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.Value;
 
 import java.util.List;
 
-@Value
+@RequiredArgsConstructor
+@ToString
 public class DatabaseRecord {
 
+    @ToString.Exclude
     private final List<String> fields;
+
+    @Getter
     private final int primaryField;
+
+    @Getter
     private final String[] entries;
 
     public String toFileString() {

@@ -1,5 +1,7 @@
 package com.wynprice.cafedafydd.server;
 
+import com.wynprice.cafedafydd.client.utils.DateUtils;
+import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.Page;
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
 import com.wynprice.cafedafydd.common.netty.packets.clientbound.*;
@@ -14,7 +16,6 @@ import com.wynprice.cafedafydd.server.utils.PermissionException;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,6 @@ public class ServerNetworkHandler extends NetworkHandler {
         }
         this.userID = entry.get().getPrimaryField();
         this.permission = PermissionLevel.valueOf(entry.get().getField(Users.PERMISSION_LEVEL));
-        Databases.USERS.writeToFile();
 
         switch (this.permission) {
             case USER:
@@ -89,7 +89,6 @@ public class ServerNetworkHandler extends NetworkHandler {
             return;
         }
         Databases.USERS.generateAndAddDatabase(Users.USERNAME, createUser.getUsername(), Users.EMAIL, createUser.getEmail(), Users.PASSWORD_HASH, createUser.getPasswordHash(), Users.PERMISSION_LEVEL, PermissionLevel.USER.name());
-        Databases.USERS.writeToFile();
     }
 
     @NetworkHandle
@@ -117,6 +116,48 @@ public class ServerNetworkHandler extends NetworkHandler {
         }
         Database db = database.get();
         this.sendPacket(new PacketDatabaseEntriesResult(packet.getRequestID(), db.getFieldList(), db.getEntries(parseForm(packet.getRequestForm())).collect(Collectors.toList())));
+    }
+
+    @NetworkHandle
+    public void handleStartSession(PacketStartSession packet) {
+        Optional<DatabaseRecord> entry = Databases.COMPUTERS.getEntryFromId(packet.getComputerID());
+        if (entry.isPresent()) {
+            DatabaseRecord record = Databases.SESSIONS.generateAndAddDatabase(
+                DatabaseStrings.Sessions.USER_ID, String.valueOf(this.userID),
+                DatabaseStrings.Sessions.COMPUTER_ID, String.valueOf(packet.getComputerID()),
+                DatabaseStrings.Sessions.ISO8601_START, DateUtils.toISO8691(DateUtils.getCurrentDate()),
+                DatabaseStrings.Sessions.ISO8601_END, DatabaseStrings.Computers.HASNT_ENDED
+            );
+            entry.get().setField(DatabaseStrings.Computers.SESSION_ID, String.valueOf(record.getPrimaryField()));
+        } else {
+            this.sendPacket(new PacketDisplayError("Invalid Computer ID", "Invalid Computer ID " + packet.getComputerID()));
+        }
+        this.sendPacket(new PacketDisplayScreen(Page.USER_PAGE));
+    }
+
+    @NetworkHandle
+    public void handleCanStartSession(PacketCanStartSession packet) {
+        //Find if there are any computers with no sessions, if there are, set the client to create session page, otherwise display an error
+        if(Databases.COMPUTERS.getEntries().anyMatch(r -> "-1".equals(r.getField(DatabaseStrings.Computers.SESSION_ID)))) {
+            this.sendPacket(new PacketDisplayScreen(Page.CREATE_SESSION));
+        } else {
+            this.sendPacket(new PacketDisplayError("Unable to start session", "There are no computers available :("));
+        }
+    }
+
+    @NetworkHandle
+    public void handleStopSession(PacketStopSession packet) {
+        Optional<DatabaseRecord> entry = Databases.SESSIONS.getEntryFromId(packet.getSessionID());
+        if(entry.isPresent()) {
+            DatabaseRecord record = entry.get();
+            record.setField(DatabaseStrings.Sessions.ISO8601_END, DateUtils.toISO8691(DateUtils.getCurrentDate()));
+            //Log an error if there is not computer found? It *shouldn't* happen
+            Databases.COMPUTERS.getEntryFromId(Integer.parseInt(record.getField(DatabaseStrings.Sessions.COMPUTER_ID))).ifPresent(r -> r.setField(DatabaseStrings.Computers.SESSION_ID, "-1"));
+
+            this.sendPacket(new PacketCauseResync());
+        } else {
+            this.sendPacket(new PacketDisplayError("Unable to stop session", "Session with session id " + packet.getSessionID() + " does not exist"));
+        }
     }
 
     private String[] parseForm(String... form) {

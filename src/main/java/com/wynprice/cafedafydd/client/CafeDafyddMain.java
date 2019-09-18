@@ -7,6 +7,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -41,8 +42,25 @@ public class CafeDafyddMain extends Application {
     }
 
     public static void showPage(Page page) {
-        getRoot(page).ifPresent(root -> stage.setScene(new Scene(root, 500, 275)));
+        getRoot(page).ifPresent(root -> {
 
+            stage.setScene(new Scene(root, root.prefWidth(500), root.prefHeight(275)));
+        });
+    }
+
+    public static void displayNewPage(Page page, String title) {
+        getRoot(page).ifPresent(root -> {
+                Scene scene = new Scene(root, 500, 275);
+                Stage stage = new Stage();
+
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initOwner(CafeDafyddMain.stage);
+
+                stage.setTitle(title);
+                stage.setScene(scene);
+                stage.show();
+            }
+        );
     }
 
     private static Optional<Parent> getRoot(Page page) {
@@ -51,7 +69,7 @@ public class CafeDafyddMain extends Application {
             Parent loaded = loader.load();
             controller = loader.getController();
             controller.onLoaded();
-            return Optional.ofNullable(loaded);
+            return Optional.of(loaded);
         } catch (IOException e) {
             log.error("Unable to load page " + page + " for file " + page.getFileName(), e);
             return Optional.empty();

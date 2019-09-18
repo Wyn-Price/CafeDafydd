@@ -1,6 +1,7 @@
 package com.wynprice.cafedafydd.server.database;
 
 import com.wynprice.cafedafydd.client.utils.UtilCollectors;
+import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
@@ -78,7 +79,7 @@ public abstract class Database {
             return;
         }
 
-        this.entries.add(new DatabaseRecord(this.fields, id, readEntries));
+        this.entries.add(new ObservedDatabaseRecord(this, id, readEntries));
     }
 
     private boolean checkDuplicates(String[] readEntries, int id) {
@@ -118,11 +119,21 @@ public abstract class Database {
         return this.getEntries(aString).collect(UtilCollectors.toSingleEntry());
     }
 
+    public boolean remove(int id) {
+        boolean ret = this.entries.removeIf(r -> r.getPrimaryField() == id);
+        this.writeToFile();
+        return ret;
+    }
+
     public Stream<DatabaseRecord> getEntries(String... aString) {
         return this.entries.stream().filter(fieldEntry -> {
             boolean value = true;
             for (int i = 0; i < aString.length; i+=2) {
-                value &= fieldEntry.getEntries()[this.fields.indexOf(aString[i])].equals(aString[i + 1]);
+                if(DatabaseStrings.ID.equals(aString[i])) {
+                    value &= String.valueOf(fieldEntry.getPrimaryField()).equals(aString[i + 1]);
+                } else {
+                    value &= fieldEntry.getEntries()[this.fields.indexOf(aString[i])].equals(aString[i + 1]);
+                }
             }
             return value;
         });
@@ -146,8 +157,9 @@ public abstract class Database {
             }
         }
 
-        DatabaseRecord newEntry = new DatabaseRecord(this.fields, newId, entry);
+        DatabaseRecord newEntry = new ObservedDatabaseRecord(this, newId, entry);
         this.entries.add(newEntry);
+        this.writeToFile();
         return newEntry;
     }
 

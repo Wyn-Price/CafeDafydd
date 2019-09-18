@@ -47,5 +47,9 @@ public enum PacketRegistry {
         INSTANCE.registerPacket(PacketChangePassword.class, PacketChangePassword::encode, PacketChangePassword::decode);
         INSTANCE.registerPacket(PacketGetDatabaseEntries.class, PacketGetDatabaseEntries::encode, PacketGetDatabaseEntries::decode);
         INSTANCE.registerPacket(PacketDatabaseEntriesResult.class, PacketDatabaseEntriesResult::encode, PacketDatabaseEntriesResult::decode);
+        INSTANCE.registerPacket(PacketStartSession.class, PacketStartSession::encode, PacketStartSession::decode);
+        INSTANCE.registerPacket(PacketCanStartSession.class, emptyEncoder(), emptyDecoder(PacketCanStartSession::new));
+        INSTANCE.registerPacket(PacketStopSession.class, PacketStopSession::encode, PacketStopSession::decode);
+        INSTANCE.registerPacket(PacketCauseResync.class, emptyEncoder(), emptyDecoder(PacketCauseResync::new));
     }
 }

@@ -1,7 +1,9 @@
 package com.wynprice.cafedafydd.client.netty;
 
 import com.sun.istack.internal.Nullable;
+import com.sun.javafx.application.PlatformImpl;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
+import com.wynprice.cafedafydd.client.controllers.BaseController;
 import com.wynprice.cafedafydd.client.utils.FXUtils;
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
 import com.wynprice.cafedafydd.common.netty.packets.clientbound.*;
@@ -50,5 +52,10 @@ public class ClientNetworkHandler extends NetworkHandler {
     @NetworkHandle
     public void handleConfirmLogin(PacketConfirmLogin packet) {
         this.currentUsername = packet.getUsername();
+    }
+
+    @NetworkHandle
+    public void handleResync(PacketCauseResync packet) {
+        PlatformImpl.runLater(() -> CafeDafyddMain.getController(BaseController.class).ifPresent(BaseController::resync));
     }
 }
