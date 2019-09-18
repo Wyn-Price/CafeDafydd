@@ -42,10 +42,7 @@ public class CafeDafyddMain extends Application {
     }
 
     public static void showPage(Page page) {
-        getRoot(page).ifPresent(root -> {
-
-            stage.setScene(new Scene(root, root.prefWidth(500), root.prefHeight(275)));
-        });
+        getRoot(page).ifPresent(root -> stage.setScene(new Scene(root, root.prefWidth(500), root.prefHeight(275))));
     }
 
     public static void displayNewPage(Page page, String title) {

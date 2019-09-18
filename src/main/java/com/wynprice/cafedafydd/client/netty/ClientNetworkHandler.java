@@ -46,7 +46,14 @@ public class ClientNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleDatabaseRequestEntriesResult(PacketDatabaseEntriesResult packet) {
-        DatabaseRequest.GET_ENTRIES.receive(packet.getRequestID(), packet.getRecords());
+        switch (packet.getType()) {
+            case GET:
+                DatabaseRequest.GET_ENTRIES.receive(packet.getRequestID(), packet.getRecords());
+                break;
+            case SEARCH:
+                DatabaseRequest.SEARCH_ENTRIES.receive(packet.getRequestID(), packet.getRecords());
+                break;
+        }
     }
 
     @NetworkHandle

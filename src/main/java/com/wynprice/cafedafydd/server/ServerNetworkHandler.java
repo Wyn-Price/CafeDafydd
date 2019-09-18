@@ -53,12 +53,12 @@ public class ServerNetworkHandler extends NetworkHandler {
         switch (this.permission) {
             case USER:
             case STAFF_MEMBER:
-            case ADMINISTRATOR:
+//            case ADMINISTRATOR:
                 this.sendPacket(new PacketDisplayScreen(Page.USER_PAGE));
                 break;
-//            case ADMINISTRATOR:
-//                this.sendPacket(new PacketDisplayScreen(Page.ADMINISTRATOR_PAGE));
-//                break;
+            case ADMINISTRATOR:
+                this.sendPacket(new PacketDisplayScreen(Page.ADMINISTRATOR_PAGE));
+                break;
         }
         this.sendPacket(new PacketConfirmLogin(entry.get().getField(Users.USERNAME)));
     }
@@ -115,7 +115,10 @@ public class ServerNetworkHandler extends NetworkHandler {
             return;
         }
         Database db = database.get();
-        this.sendPacket(new PacketDatabaseEntriesResult(packet.getRequestID(), db.getFieldList(), db.getEntries(parseForm(packet.getRequestForm())).collect(Collectors.toList())));
+        this.sendPacket(
+            new PacketDatabaseEntriesResult(packet.getType(), packet.getRequestID(), db.getFieldList(),
+            (packet.getType().isSearch() ? db.searchEntries(parseForm(packet.getRequestForm())) : db.getEntries(parseForm(packet.getRequestForm()))).collect(Collectors.toList()))
+        );
     }
 
     @NetworkHandle

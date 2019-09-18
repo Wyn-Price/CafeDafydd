@@ -3,7 +3,9 @@ package com.wynprice.cafedafydd.server.database;
 import com.wynprice.cafedafydd.client.utils.UtilCollectors;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.RequestType;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
+import com.wynprice.cafedafydd.server.utils.AndList;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
@@ -54,6 +56,19 @@ public abstract class Database {
         for (String field : this.fields) {
             this.indexedRecords.put(field, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> r.getField(field))));
         }
+        this.indexedRecords.put(DatabaseStrings.ID, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(DatabaseRecord::getPrimaryField)));
+    }
+
+    private void reindexRecord(DatabaseRecord record) {
+        for (String field : this.fields) {
+            List<DatabaseRecord> list = this.indexedRecords.get(field);
+            list.remove(record);
+            Algorithms.insert(list, record, Comparator.comparing(r -> r.getField(field)));
+        }
+
+        List<DatabaseRecord> list = this.indexedRecords.get(DatabaseStrings.ID);
+        list.remove(record);
+        Algorithms.insert(list, record, Comparator.comparing(DatabaseRecord::getPrimaryField));
     }
 
     //Remove the record from the indexed records and insert it
@@ -62,6 +77,7 @@ public abstract class Database {
         list.remove(record);
         Algorithms.insert(list, record, Comparator.comparing(r -> r.getField(field)));
     }
+
 
     private void parseLine(String line, List<String> fileFields) {
         List<String> idFields = this.concat(this.fields, ID);
@@ -127,33 +143,30 @@ public abstract class Database {
     }
 
     public Optional<DatabaseRecord> getEntryFromId(int id) {
-        return this.entries.stream()
-            .filter(arr -> arr.getPrimaryField() == id)
-            .collect(UtilCollectors.toSingleEntry());
+        return Algorithms.doRecordSearch(this.indexedRecords.get(DatabaseStrings.ID), DatabaseRecord::getPrimaryField, id, Integer::compareTo);
     }
 
     public Optional<DatabaseRecord> getSingleEntry(String... aString) {
         return this.getEntries(aString).collect(UtilCollectors.toSingleEntry());
     }
 
-    public boolean remove(int id) {
-        boolean ret = this.entries.removeIf(r -> r.getPrimaryField() == id);
-        this.writeToFile();
-        return ret;
+    public Stream<DatabaseRecord> searchEntries(String... form) {
+        AndList<DatabaseRecord> list = new AndList<>(new ArrayList<>());
+        for (int i = 0; i < form.length; i+=2) {
+            int index = i;
+            list.and(Algorithms.splicedBinarySearch(this.indexedRecords.get(form[index]), r -> r.getField(form[index]), form[index+1],
+                (o1, o2) -> o2.contains(o1) ? 0 : o1.compareTo(o2)), index==0);
+        }
+        return list.stream();
     }
 
-    public Stream<DatabaseRecord> getEntries(String... aString) {
-        return this.entries.stream().filter(fieldEntry -> {
-            boolean value = true;
-            for (int i = 0; i < aString.length; i+=2) {
-                if(DatabaseStrings.ID.equals(aString[i])) {
-                    value &= String.valueOf(fieldEntry.getPrimaryField()).equals(aString[i + 1]);
-                } else {
-                    value &= fieldEntry.getEntries()[this.fields.indexOf(aString[i])].equals(aString[i + 1]);
-                }
-            }
-            return value;
-        });
+    public Stream<DatabaseRecord> getEntries(String... form) {
+        AndList<DatabaseRecord> list = new AndList<>(new ArrayList<>());
+        for (int i = 0; i < form.length; i+=2) {
+            int index = i;
+            list.and(Algorithms.splicedBinarySearch(this.indexedRecords.get(form[index]), r -> r.getField(form[index]), form[index+1], String::compareTo), index==0);
+        }
+        return list.stream();
     }
 
     public DatabaseRecord generateAndAddDatabase(String... formatFields) {
@@ -176,23 +189,18 @@ public abstract class Database {
 
         DatabaseRecord newEntry = new ObservedDatabaseRecord(this, newId, entry);
         this.entries.add(newEntry);
+        this.reindexRecord(newEntry);
         this.writeToFile();
         return newEntry;
     }
 
-    public boolean hasAllEntries(String... aString) {
-        return this.entries.stream().anyMatch(fieldEntry -> {
-            boolean value = true;
-            for (int i = 0; i < aString.length; i+=2) {
-                value &= fieldEntry.getEntries()[this.fields.indexOf(aString[i])].equals(aString[i + 1]);
-            }
-            return value;
-        });
+    public boolean hasAllEntries(String... form) {
+        return this.getEntries(form).findAny().isPresent();
     }
 
-    public boolean generateIfNotPresent(String... aString) {
-        if(!this.hasAllEntries(aString)) {
-            this.generateAndAddDatabase(aString);
+    public boolean generateIfNotPresent(String... form) {
+        if(!this.hasAllEntries(form)) {
+            this.generateAndAddDatabase(form);
             return true;
         }
         return false;

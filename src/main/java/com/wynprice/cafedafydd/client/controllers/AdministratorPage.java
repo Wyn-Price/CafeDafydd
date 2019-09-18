@@ -16,11 +16,12 @@ public class AdministratorPage implements BaseController {
     }
 
     @FXML
-    public void onAddStaffMemeber() {
+    public void onEditUser() {
+        CafeDafyddMain.showPage(Page.SEARCH_USERS_PAGE);
     }
 
     @FXML
-    public void onEditUser() {
+    public void onAddStaffMemeber() {
     }
 
     @FXML

@@ -4,6 +4,7 @@ import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketGetDatabaseEntries;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketHasDatabaseEntry;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.RequestType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -16,7 +17,8 @@ import java.util.function.Consumer;
 public class DatabaseRequest {
 
     public static final RequestForm<Boolean> HAS_ENTRY = new RequestForm<>(PacketHasDatabaseEntry::new);
-    public static final RequestForm<List<DatabaseRecord>> GET_ENTRIES = new RequestForm<>(PacketGetDatabaseEntries::new);
+    public static final RequestForm<List<DatabaseRecord>> GET_ENTRIES = new RequestForm<>((r, d, f) -> new PacketGetDatabaseEntries(RequestType.GET, r, d, f));
+    public static final RequestForm<List<DatabaseRecord>> SEARCH_ENTRIES = new RequestForm<>((r, d, f) -> new PacketGetDatabaseEntries(RequestType.SEARCH, r, d, f));
 
 
     @RequiredArgsConstructor

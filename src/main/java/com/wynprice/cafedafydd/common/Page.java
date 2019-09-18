@@ -10,6 +10,7 @@ public enum Page {
     CREATE_SESSION("create_session"),
 
     ADD_USER_PAGE("create_user"),
+    SEARCH_USERS_PAGE("search_users"),
 
     ADMINISTRATOR_PAGE("administrator_panel");
 
