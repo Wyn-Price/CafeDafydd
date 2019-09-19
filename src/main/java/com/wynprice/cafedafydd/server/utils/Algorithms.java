@@ -27,6 +27,7 @@ public class Algorithms {
     //array = [0, 1, 1, 2, 2, 2, 3]
     //splicedBinarySearch(array, 1) -> [1, 1]
     //splicedBinarySearch(array, 2) -> [2, 2, 2]
+    //splicedBinarySearch(array, 4) -> []
     public static <E, T> List<E> splicedBinarySearch(List<E> list, Function<E, T> mapper, T object, Comparator<? super T> comparator) {
         int index = binarySearchIndex(list, mapper, object, comparator, true);
         if(index < 0) {
@@ -51,7 +52,7 @@ public class Algorithms {
 
     private static <E, T> int binarySearchIndex(List<E> list, Function<E, T> mapper, T object, Comparator<? super T> comparator, boolean mustExist) {
         if(list.isEmpty()) {
-            return 0;
+            return -1;
         }
         int top = list.size() - 1;
         int bottom = 0;
