@@ -1,9 +1,9 @@
 package com.wynprice.cafedafydd.common.utils;
 
+import com.wynprice.cafedafydd.common.DatabaseStrings;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import lombok.Value;
 
 import java.util.List;
 
@@ -25,6 +25,9 @@ public class DatabaseRecord {
     }
 
     public String getField(String field) {
+        if(DatabaseStrings.ID.equals(field)) {
+            return String.valueOf(this.primaryField);
+        }
         return this.entries[this.fields.indexOf(field)];
     }
 

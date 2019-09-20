@@ -41,7 +41,7 @@ public abstract class Databases {
         }
 
         @Override
-        protected String[] getPrimaryFields() {
+        public String[] getPrimaryFields() {
             return new String[] { Users.USERNAME, Users.EMAIL };
         }
     }
@@ -59,7 +59,7 @@ public abstract class Databases {
         }
 
         @Override
-        protected String[] getPrimaryFields() {
+        public String[] getPrimaryFields() {
             return new String[0];
         }
     }
@@ -74,6 +74,11 @@ public abstract class Databases {
         @Override
         protected String[] getFields() {
             return new String[]{ Computers.OS, Computers.SESSION_ID };
+        }
+
+        @Override
+        public PermissionLevel getEditLevel() {
+            return PermissionLevel.ADMINISTRATOR;
         }
     }
 

@@ -1,25 +1,30 @@
 package com.wynprice.cafedafydd.client.controllers;
 
 import com.sun.javafx.tk.Toolkit;
+import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
+import com.wynprice.cafedafydd.common.Page;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.text.Font;
+import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
-import static com.wynprice.cafedafydd.common.DatabaseStrings.*;
+import static com.wynprice.cafedafydd.common.DatabaseStrings.Users;
 
 
 public class SearchUsersPage implements BaseController {
     @FXML public Button backButton;
-    @FXML public ListView<String> searchResult;
+    @FXML public ListView<UserRecord> searchResult;
 
     @FXML public TextField usernameText;
     @FXML public TextField emailText;
@@ -29,6 +34,10 @@ public class SearchUsersPage implements BaseController {
     public void backButtonClicked() {
     }
 
+    @Override
+    public void resync() {
+        this.doSearch();
+    }
 
     @FXML
     public void doSearch() {
@@ -58,10 +67,14 @@ public class SearchUsersPage implements BaseController {
                 records -> Platform.runLater(() -> { //Ensure on Java FX Thread
                     this.searchResult.getItems().clear();
                     for (DatabaseRecord record : records) {
-                        this.searchResult.getItems().add(
+                        this.searchResult.getItems().add(new UserRecord(
+                            record.getPrimaryField(),
+
                             "Username: " + bloat(record.getField(Users.USERNAME)) +
-                            "Email: " + bloat(record.getField(Users.EMAIL)) + "    " +
-                            "Permissions: " +bloat(record.getField(Users.PERMISSION_LEVEL)) + "    ");
+                                "Email: " + bloat(record.getField(Users.EMAIL)) + "    " +
+                                "Permissions: " +bloat(record.getField(Users.PERMISSION_LEVEL)) + "    "
+
+                        ));
                     }
                 }),
                 form.toArray(new String[0])
@@ -96,5 +109,27 @@ public class SearchUsersPage implements BaseController {
 
 
         return out.toString();
+    }
+
+    @FXML
+    public void mouseClicked(MouseEvent mouseEvent) {
+        if(mouseEvent.getButton() == MouseButton.PRIMARY && mouseEvent.getClickCount() == 2) {
+            UserRecord item = this.searchResult.getSelectionModel().getSelectedItem();
+            if(item != null) { //Should always be true
+                CafeDafyddMain.displayNewPage(Page.EDIT_USER_PAGE, "Edit User");
+                CafeDafyddMain.getController(EditUserPage.class).ifPresent(e -> e.setId(item.id));
+            }
+        }
+    }
+
+    @Value
+    private class UserRecord {
+        private final int id;
+        private final String toString;
+
+        @Override
+        public String toString() {
+            return this.toString;
+        }
     }
 }

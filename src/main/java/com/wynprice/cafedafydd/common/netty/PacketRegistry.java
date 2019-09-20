@@ -24,7 +24,7 @@ public enum PacketRegistry {
 
     @SuppressWarnings("unchecked")
     public <T> PacketEntry<T> getEntry(T obj) {
-        return (PacketEntry<T>) this.entries.stream().filter(e -> obj.getClass() == e.getClazz()).findAny().orElseThrow(() -> new IllegalArgumentException("Could not find packet registered with class " + obj.getClass() + " for state " + this.name()));
+        return (PacketEntry<T>) this.entries.stream().filter(e -> obj.getClass() == e.getClazz()).findAny().orElseThrow(() -> new IllegalArgumentException("Could not find packet registered with class " + obj.getClass()));
     }
 
     private static <T> Function<ByteBuf, T> emptyDecoder(Supplier<T> supplier) {
@@ -51,5 +51,6 @@ public enum PacketRegistry {
         INSTANCE.registerPacket(PacketCanStartSession.class, emptyEncoder(), emptyDecoder(PacketCanStartSession::new));
         INSTANCE.registerPacket(PacketStopSession.class, PacketStopSession::encode, PacketStopSession::decode);
         INSTANCE.registerPacket(PacketCauseResync.class, emptyEncoder(), emptyDecoder(PacketCauseResync::new));
+        INSTANCE.registerPacket(PacketTryEditDatabase.class, PacketTryEditDatabase::encode, PacketTryEditDatabase::decode);
     }
 }

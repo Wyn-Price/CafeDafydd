@@ -99,7 +99,7 @@ public class CreateUserPage implements BaseController {
 
     @FXML
     public void onKeyUsername(KeyEvent keyEvent) {
-        if(!MainPage.USERNAME_MATCHER.reset(String.valueOf(keyEvent.getCharacter())).find()) {
+        if(!"\b".equals(keyEvent.getCharacter()) && !MainPage.USERNAME_MATCHER.reset(keyEvent.getCharacter()).find()) {
             keyEvent.consume();
             this.errorField.setText("Username must only contain characters, numbers and underscores. '" + keyEvent.getCharacter() + "' is not allowed.");
         }

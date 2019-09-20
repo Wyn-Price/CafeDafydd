@@ -44,7 +44,7 @@
       <Insets bottom="20.0" top="20.0" />
     </GridPane.margin>
   </Button>
-  <ListView fx:id="searchResult" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.rowIndex="3" />
+  <ListView fx:id="searchResult" onMouseClicked="#mouseClicked" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.rowIndex="3" />
   <GridPane GridPane.columnIndex="0" GridPane.rowIndex="2">
     <columnConstraints>
       <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />

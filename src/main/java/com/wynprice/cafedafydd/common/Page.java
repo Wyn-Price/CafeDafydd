@@ -11,6 +11,7 @@ public enum Page {
 
     ADD_USER_PAGE("create_user"),
     SEARCH_USERS_PAGE("search_users"),
+    EDIT_USER_PAGE("edit_user"),
 
     ADMINISTRATOR_PAGE("administrator_panel");
 

@@ -33,7 +33,7 @@ public class MainPage implements BaseController{
 
     @FXML
     public void onKeyUsername(KeyEvent keyEvent) {
-        if(!USERNAME_MATCHER.reset(String.valueOf(keyEvent.getCharacter())).find()) {
+        if(!"\b".equals(keyEvent.getCharacter()) && !USERNAME_MATCHER.reset(keyEvent.getCharacter()).find()) {
             keyEvent.consume();
         }
     }

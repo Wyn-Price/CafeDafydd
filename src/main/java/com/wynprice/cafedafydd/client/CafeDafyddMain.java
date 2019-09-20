@@ -5,6 +5,7 @@ import com.wynprice.cafedafydd.client.netty.CafeDayfddClient;
 import com.wynprice.cafedafydd.common.Page;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
@@ -14,12 +15,13 @@ import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.Stack;
 
 @Log4j2
 public class CafeDafyddMain extends Application {
 
     private static Stage stage;
-    private static BaseController controller;
+    private static Stack<BaseController> controller = new Stack<>();
 
     @Getter private static CafeDayfddClient client;
 
@@ -32,7 +34,7 @@ public class CafeDafyddMain extends Application {
     public void start(Stage stage) {
         CafeDafyddMain.stage = stage;
         stage.setTitle("Cafe Dafydd");
-        stage.setScene(new Scene(getRoot(Page.LOGIN_PAGE).orElseThrow(IllegalArgumentException::new), 500, 275));
+        stage.setScene(new Scene(getRoot(Page.LOGIN_PAGE, true).orElseThrow(IllegalArgumentException::new), 500, 275));
         stage.show();
 
         stage.onCloseRequestProperty().set(event -> {
@@ -41,12 +43,17 @@ public class CafeDafyddMain extends Application {
         });
     }
 
+    public static void closeTopPage(Node node) {
+        node.getScene().getWindow().hide();
+        controller.pop();
+    }
+
     public static void showPage(Page page) {
-        getRoot(page).ifPresent(root -> stage.setScene(new Scene(root, root.prefWidth(500), root.prefHeight(275))));
+        getRoot(page, false).ifPresent(root -> stage.setScene(new Scene(root, root.prefWidth(500), root.prefHeight(275))));
     }
 
     public static void displayNewPage(Page page, String title) {
-        getRoot(page).ifPresent(root -> {
+        getRoot(page, true).ifPresent(root -> {
                 Scene scene = new Scene(root, 500, 275);
                 Stage stage = new Stage();
 
@@ -60,12 +67,15 @@ public class CafeDafyddMain extends Application {
         );
     }
 
-    private static Optional<Parent> getRoot(Page page) {
+    private static Optional<Parent> getRoot(Page page, boolean newPage) {
         try {
             FXMLLoader loader = new FXMLLoader(CafeDafyddMain.class.getResource("/pages/" + page.getFileName() + ".fxml"));
             Parent loaded = loader.load();
-            controller = loader.getController();
-            controller.onLoaded();
+            if(!newPage) {
+                controller.pop();
+            }
+            controller.push(loader.getController());
+            controller.peek().onLoaded();
             return Optional.of(loaded);
         } catch (IOException e) {
             log.error("Unable to load page " + page + " for file " + page.getFileName(), e);
@@ -75,6 +85,6 @@ public class CafeDafyddMain extends Application {
 
     @SuppressWarnings("unchecked")
     public static <T> Optional<T> getController(Class<T> controllerClass) {
-        return controllerClass.isInstance(controller) ? Optional.of((T)controller) : Optional.empty();
+        return controllerClass.isInstance(controller.peek()) ? Optional.of((T)controller.peek()) : Optional.empty();
     }
 }

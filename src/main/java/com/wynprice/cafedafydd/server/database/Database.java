@@ -4,6 +4,7 @@ import com.wynprice.cafedafydd.client.utils.UtilCollectors;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.RequestType;
+import com.wynprice.cafedafydd.server.PermissionLevel;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
 import com.wynprice.cafedafydd.server.utils.AndList;
 import lombok.extern.log4j.Log4j2;
@@ -56,7 +57,7 @@ public abstract class Database {
         for (String field : this.fields) {
             this.indexedRecords.put(field, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> r.getField(field))));
         }
-        this.indexedRecords.put(DatabaseStrings.ID, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(DatabaseRecord::getPrimaryField)));
+        this.indexedRecords.put(DatabaseStrings.ID, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> String.valueOf(r.getPrimaryField()))));
     }
 
     private void reindexRecord(DatabaseRecord record) {
@@ -229,10 +230,14 @@ public abstract class Database {
         return this.fields;
     }
 
+    public PermissionLevel getEditLevel() {
+        return PermissionLevel.STAFF_MEMBER;
+    }
+
     protected abstract String getFilename();
     protected abstract String[] getFields();
 
-    protected String[] getPrimaryFields() {
+    public String[] getPrimaryFields() {
         return new String[0];
     }
 

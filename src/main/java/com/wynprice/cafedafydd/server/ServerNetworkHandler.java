@@ -163,6 +163,36 @@ public class ServerNetworkHandler extends NetworkHandler {
         }
     }
 
+    @NetworkHandle
+    public void handleTryEditDatabase(PacketTryEditDatabase packet) {
+        Optional<Database> database = Databases.getFromFile(packet.getDatabase());
+
+        if (database.isPresent()) {
+            Database db = database.get();
+            this.ensurePerms(db.getEditLevel(), "Editing Database " + packet.getDatabase());
+            Optional<DatabaseRecord> record = database.flatMap(d -> d.getEntryFromId(packet.getRecordID()));
+            if(record.isPresent()) {
+                DatabaseRecord dr = record.get();
+                String[] form = packet.getForm();
+                for (int i = 0; i < form.length; i+=2) {
+                    boolean primary = Arrays.asList(db.getPrimaryFields()).contains(form[i]);
+                    if(primary) {
+                        Optional<DatabaseRecord> any = db.getEntries(form[i], form[i + 1]).filter(d -> d != dr).findAny();
+                        if(any.isPresent()) {
+                            this.sendPacket(new PacketDisplayError("Unable Editing Database", "Field '" + form[i] + "' is a primary field, but the set entry '" + form[i + 1] + "'\nalready exists in record " + any.get()));
+                            return;
+                        }
+                    }
+                    dr.setField(form[i], form[i+1]);
+                }
+            } else {
+                this.sendPacket(new PacketDisplayError("Unable to edit database", "Could not find record with id " + packet.getRecordID() + " for database " + packet.getDatabase()));
+            }
+        } else {
+            this.sendPacket(new PacketDisplayError("Unable to edit database", "Could not find database " + packet.getDatabase()));
+        }
+    }
+
     private String[] parseForm(String... form) {
         return Arrays.stream(form).map(s -> s.replaceAll("\\Q$$userid\\E", String.valueOf(this.userID))).toArray(String[]::new);
     }
