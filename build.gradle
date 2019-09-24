@@ -20,3 +20,24 @@ dependencies {
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.12.1'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.12.1'
 }
+
+boolean checkImport(String base, String... blacklisted) {
+    fileTree("src/main/java/com/wynprice/cafedafydd/$base").filter { it.isFile() }.forEach {
+        for(String s : blacklisted) {
+            s = "com.wynprice.cafedafydd.$s"
+            def lines = it.readLines()
+            for(int i = 0; i < lines.size(); i++) {
+                if(lines.get(i).contains(s)) {
+                    println("Found blacklisted import $s in $it.name at line $i (${lines.get(i)})")
+                    return true
+                }
+            }
+        }
+    }
+}
+
+task checkAllImports () {
+    if(checkImport("common", "client", "server") | checkImport("client", "server") | checkImport("server", "client")) {
+        System.exit(1)
+    }
+}
