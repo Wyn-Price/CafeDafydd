@@ -3,7 +3,6 @@ package com.wynprice.cafedafydd.server.database;
 import com.wynprice.cafedafydd.client.utils.UtilCollectors;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
-import com.wynprice.cafedafydd.common.utils.RequestType;
 import com.wynprice.cafedafydd.server.PermissionLevel;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
 import com.wynprice.cafedafydd.server.utils.AndList;
@@ -152,20 +151,23 @@ public abstract class Database {
     }
 
     public Stream<DatabaseRecord> searchEntries(String... form) {
-        AndList<DatabaseRecord> list = new AndList<>(new ArrayList<>());
-        for (int i = 0; i < form.length; i+=2) {
-            int index = i;
-            list.and(Algorithms.splicedBinarySearch(this.indexedRecords.get(form[index]), r -> r.getField(form[index]), form[index+1],
-                (o1, o2) -> o2.contains(o1) ? 0 : o1.compareTo(o2)), index==0);
-        }
-        return list.stream();
+        return this.streamEntries((o1, o2) -> o2.contains(o1) ? 0 : o1.compareTo(o2), form);
     }
 
     public Stream<DatabaseRecord> getEntries(String... form) {
+        return this.streamEntries(String::compareTo, form);
+    }
+
+    private Stream<DatabaseRecord> streamEntries(Comparator<String> comparator, String... form) {
         AndList<DatabaseRecord> list = new AndList<>(new ArrayList<>());
         for (int i = 0; i < form.length; i+=2) {
-            int index = i;
-            list.and(Algorithms.splicedBinarySearch(this.indexedRecords.get(form[index]), r -> r.getField(form[index]), form[index+1], String::compareTo), index==0);
+            boolean inverted = false;
+            if(form[i].equals(DatabaseStrings.NOT_PREFIX)) {
+                i++;
+                inverted = true;
+            }
+            String finalField = form[i]; //Damn you lambda statements
+            list.and(Algorithms.splicedBinarySearch(this.indexedRecords.get(finalField), r -> r.getField(finalField), form[i+1], comparator), inverted, i==0);
         }
         return list.stream();
     }
@@ -230,8 +232,16 @@ public abstract class Database {
         return this.fields;
     }
 
+    public PermissionLevel getReadLevel() {
+        return PermissionLevel.STAFF_MEMBER;
+    }
+
     public PermissionLevel getEditLevel() {
         return PermissionLevel.STAFF_MEMBER;
+    }
+
+    public boolean canEdit(DatabaseRecord record, PermissionLevel level) {
+        return true;
     }
 
     protected abstract String getFilename();

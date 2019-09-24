@@ -4,6 +4,7 @@ import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketGetDatabaseEntries;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketHasDatabaseEntry;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.FormBuilder;
 import com.wynprice.cafedafydd.common.utils.RequestType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -29,11 +30,16 @@ public class DatabaseRequest {
         private int requests = 0;
         private final Map<Integer, Consumer<D>> storage = new HashMap<>();
 
+        public void sendRequest(String databaseFile, Consumer<D> reciever, FormBuilder form) {
+            this.sendRequest(databaseFile, reciever, form.getForm());
+        }
+
         public void sendRequest(String databaseFile, Consumer<D> reciever, String... form) {
             int id = this.requests++;
             this.storage.put(id, reciever);
             CafeDafyddMain.getClient().getHandler().sendPacket(this.creation.createPacket(id, databaseFile, form));
         }
+
 
         public void receive(int requestID, D value) {
             Consumer<D> removed = this.storage.remove(requestID);

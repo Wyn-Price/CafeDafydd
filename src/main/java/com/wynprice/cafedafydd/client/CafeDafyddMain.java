@@ -47,6 +47,7 @@ public class CafeDafyddMain extends Application {
     public static void closeTopPage(Node node) {
         node.getScene().getWindow().hide();
         controller.pop();
+        pageHistory.pop();
     }
 
     public static void showPage(Page page) {
@@ -56,6 +57,7 @@ public class CafeDafyddMain extends Application {
     public static void back() {
         pageHistory.pop();
         showPage(pageHistory.peek());
+        pageHistory.pop();
     }
 
     public static void displayNewPage(Page page, String title) {

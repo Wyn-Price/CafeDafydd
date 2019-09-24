@@ -1,5 +1,6 @@
 package com.wynprice.cafedafydd.server.database;
 
+import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.server.PermissionLevel;
 import lombok.extern.log4j.Log4j2;
 
@@ -43,6 +44,11 @@ public abstract class Databases {
         @Override
         public String[] getPrimaryFields() {
             return new String[] { Users.USERNAME, Users.EMAIL };
+        }
+
+        @Override
+        public boolean canEdit(DatabaseRecord record, PermissionLevel level) {
+            return PermissionLevel.valueOf(record.getField(Users.PERMISSION_LEVEL)).getPerIndex() < level.getPerIndex();
         }
     }
 

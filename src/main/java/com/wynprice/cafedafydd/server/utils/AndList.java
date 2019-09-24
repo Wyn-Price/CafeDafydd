@@ -13,11 +13,11 @@ public class AndList<T> implements Collection<T> {
     private final List<T> backingList;
 
 
-    public void and(Collection<T> elements, boolean canSet) {
+    public void and(Collection<T> elements, boolean inverted, boolean canSet) {
         if(this.isEmpty() && canSet) {
             this.addAll(elements);
         }
-        this.removeIf(t -> !elements.contains(t));
+        this.removeIf(t -> inverted == elements.contains(t));
     }
 
 }

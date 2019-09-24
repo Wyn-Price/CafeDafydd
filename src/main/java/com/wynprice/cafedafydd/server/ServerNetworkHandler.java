@@ -71,10 +71,10 @@ public class ServerNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleDatabaseRequest(PacketHasDatabaseEntry hasEntry) {
-        this.ensurePerms(PermissionLevel.STAFF_MEMBER, "Database Lookup");
         Optional<Database> fromFile = Databases.getFromFile(hasEntry.getDatabaseFile());
         if(fromFile.isPresent()) {
             Database database = fromFile.get();
+            this.ensurePerms(database.getReadLevel(), "Database Lookup");
             this.sendPacket(new PacketHasDatabaseEntryResult(hasEntry.getRequestID(), database.hasAllEntries(parseForm(hasEntry.getForm()))));
         } else {
             log.error("Requested database file " + hasEntry.getDatabaseFile() + " but it could not be found. ");
@@ -115,6 +115,7 @@ public class ServerNetworkHandler extends NetworkHandler {
             return;
         }
         Database db = database.get();
+        this.ensurePerms(db.getReadLevel(), "Database Lookup");
         this.sendPacket(
             new PacketDatabaseEntriesResult(packet.getType(), packet.getRequestID(), db.getFieldList(),
             (packet.getType().isSearch() ? db.searchEntries(parseForm(packet.getRequestForm())) : db.getEntries(parseForm(packet.getRequestForm()))).collect(Collectors.toList()))
@@ -166,13 +167,16 @@ public class ServerNetworkHandler extends NetworkHandler {
     @NetworkHandle
     public void handleTryEditDatabase(PacketTryEditDatabase packet) {
         Optional<Database> database = Databases.getFromFile(packet.getDatabase());
-
         if (database.isPresent()) {
             Database db = database.get();
             this.ensurePerms(db.getEditLevel(), "Editing Database " + packet.getDatabase());
             Optional<DatabaseRecord> record = database.flatMap(d -> d.getEntryFromId(packet.getRecordID()));
             if(record.isPresent()) {
                 DatabaseRecord dr = record.get();
+                if(!db.canEdit(dr, this.permission)) {
+                    this.sendPacket(new PacketDisplayError("Unable Editing Database", "Cannot edit that record. Database prevented editing of it with permission " + this.permission));
+                    return;
+                }
                 String[] form = packet.getForm();
                 for (int i = 0; i < form.length; i+=2) {
                     boolean primary = Arrays.asList(db.getPrimaryFields()).contains(form[i]);

@@ -4,7 +4,9 @@ import com.sun.javafx.tk.Toolkit;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
 import com.wynprice.cafedafydd.common.Page;
+import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketTryEditDatabase;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.FormBuilder;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -117,8 +119,27 @@ public class SearchUsersPage implements BaseController {
         if(mouseEvent.getButton() == MouseButton.PRIMARY && mouseEvent.getClickCount() == 2) {
             UserRecord item = this.searchResult.getSelectionModel().getSelectedItem();
             if(item != null) { //Should always be true
-                CafeDafyddMain.displayNewPage(Page.EDIT_USER_PAGE, "Edit User");
-                CafeDafyddMain.getController(EditUserPage.class).ifPresent(e -> e.setId(item.id));
+                CafeDafyddMain.showPage(Page.EDIT_USER_PAGE);
+                CafeDafyddMain.getController(EditUserPage.class).ifPresent(e -> {
+                    e.setId(item.id);
+                    e.displayImages(false);
+                    e.resync();
+                    e.setTitle("Edit User");
+                    e.setConsumer((hasUsername, username, hasEmail, email, hasPassword, passwordHash) -> {
+                        FormBuilder.INSTANCE
+                            .with(Users.USERNAME, username).when(hasUsername)
+                            .with(Users.EMAIL, email).when(hasEmail)
+                            .with(Users.PASSWORD_HASH, passwordHash).when(hasPassword);
+
+                        if(FormBuilder.INSTANCE.isEmpty()) {
+                            FormBuilder.INSTANCE.reset();
+                        } else {
+                            CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Users.FILE_NAME, item.id, FormBuilder.INSTANCE.getForm()));
+                        }
+                        CafeDafyddMain.back();
+                        CafeDafyddMain.getController(BaseController.class).ifPresent(BaseController::resync);
+                    });
+                });
             }
         }
     }

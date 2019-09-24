@@ -3,6 +3,7 @@ package com.wynprice.cafedafydd.common;
 public class DatabaseStrings {
 
     public static final String ID = "record_id";
+    public static final String NOT_PREFIX = "$$NOT$$";
 
     public static class Users {
         public static final String FILE_NAME = "users";

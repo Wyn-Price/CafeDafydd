@@ -3,7 +3,8 @@ package com.wynprice.cafedafydd.server;
 public enum PermissionLevel {
     USER(0),
     STAFF_MEMBER(1),
-    ADMINISTRATOR(2);
+    ADMINISTRATOR(2),
+    IMPOSSIBLE(99);
 
     private final int perIndex;
     
