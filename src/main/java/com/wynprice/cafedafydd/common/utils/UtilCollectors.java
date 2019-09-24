@@ -1,4 +1,4 @@
-package com.wynprice.cafedafydd.client.utils;
+package com.wynprice.cafedafydd.common.utils;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

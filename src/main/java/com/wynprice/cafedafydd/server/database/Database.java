@@ -1,6 +1,6 @@
 package com.wynprice.cafedafydd.server.database;
 
-import com.wynprice.cafedafydd.client.utils.UtilCollectors;
+import com.wynprice.cafedafydd.common.utils.UtilCollectors;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.server.PermissionLevel;

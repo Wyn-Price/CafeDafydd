@@ -1,4 +1,4 @@
-package com.wynprice.cafedafydd.client.utils;
+package com.wynprice.cafedafydd.common.utils;
 
 import lombok.extern.log4j.Log4j2;
 
