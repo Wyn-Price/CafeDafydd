@@ -6,6 +6,7 @@ import com.wynprice.cafedafydd.client.utils.FXUtils;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketStartSession;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -36,6 +37,11 @@ public class CreateSessionPage implements BaseController {
         } else {
             FXUtils.showBasicAlert(Alert.AlertType.ERROR, "No system Selected", "You need to select a system to start the session", ButtonType.OK);
         }
+    }
+
+    @FXML
+    public void goBack() {
+        CafeDafyddMain.back();
     }
 
 

@@ -32,6 +32,7 @@ public class SearchUsersPage implements BaseController {
 
     @FXML
     public void backButtonClicked() {
+        CafeDafyddMain.back();
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketTryEditDatabase;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -53,5 +54,10 @@ public class EditUserPage implements BaseController {
     public void setId(int id) {
         this.id = id;
         this.resync();
+    }
+
+    @FXML
+    public void goBack() {
+        CafeDafyddMain.back();
     }
 }

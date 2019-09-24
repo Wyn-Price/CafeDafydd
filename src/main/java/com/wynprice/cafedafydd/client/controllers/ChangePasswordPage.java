@@ -3,6 +3,7 @@ package com.wynprice.cafedafydd.client.controllers;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.utils.FXUtils;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketChangePassword;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
@@ -39,4 +40,8 @@ public class ChangePasswordPage implements BaseController {
         CafeDafyddMain.getClient().getHandler().sendPacket(new PacketChangePassword(genetatePasswordHash(username, this.currentPassword.getText()), genetatePasswordHash(username, this.passwordField.getText())));
     }
 
+    @FXML
+    public void goBack() {
+        CafeDafyddMain.back();
+    }
 }

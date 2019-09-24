@@ -22,6 +22,7 @@ public class CafeDafyddMain extends Application {
 
     private static Stage stage;
     private static Stack<BaseController> controller = new Stack<>();
+    private static Stack<Page> pageHistory = new Stack<>();
 
     @Getter private static CafeDayfddClient client;
 
@@ -34,7 +35,7 @@ public class CafeDafyddMain extends Application {
     public void start(Stage stage) {
         CafeDafyddMain.stage = stage;
         stage.setTitle("Cafe Dafydd");
-        stage.setScene(new Scene(getRoot(Page.LOGIN_PAGE, true).orElseThrow(IllegalArgumentException::new), 500, 275));
+        stage.setScene(getScene(Page.LOGIN_PAGE, true).orElseThrow(IllegalArgumentException::new));
         stage.show();
 
         stage.onCloseRequestProperty().set(event -> {
@@ -49,12 +50,16 @@ public class CafeDafyddMain extends Application {
     }
 
     public static void showPage(Page page) {
-        getRoot(page, false).ifPresent(root -> stage.setScene(new Scene(root, root.prefWidth(500), root.prefHeight(275))));
+        getScene(page, false).ifPresent(stage::setScene);
+    }
+
+    public static void back() {
+        pageHistory.pop();
+        showPage(pageHistory.peek());
     }
 
     public static void displayNewPage(Page page, String title) {
-        getRoot(page, true).ifPresent(root -> {
-                Scene scene = new Scene(root, 500, 275);
+        getScene(page, true).ifPresent(scene -> {
                 Stage stage = new Stage();
 
                 stage.initModality(Modality.WINDOW_MODAL);
@@ -67,16 +72,17 @@ public class CafeDafyddMain extends Application {
         );
     }
 
-    private static Optional<Parent> getRoot(Page page, boolean newPage) {
+    private static Optional<Scene> getScene(Page page, boolean newPage) {
         try {
             FXMLLoader loader = new FXMLLoader(CafeDafyddMain.class.getResource("/pages/" + page.getFileName() + ".fxml"));
             Parent loaded = loader.load();
             if(!newPage) {
                 controller.pop();
             }
+            pageHistory.push(page);
             controller.push(loader.getController());
             controller.peek().onLoaded();
-            return Optional.of(loaded);
+            return Optional.of(new Scene(loaded, loaded.prefWidth(500), loaded.prefHeight(275)));
         } catch (IOException e) {
             log.error("Unable to load page " + page + " for file " + page.getFileName(), e);
             return Optional.empty();

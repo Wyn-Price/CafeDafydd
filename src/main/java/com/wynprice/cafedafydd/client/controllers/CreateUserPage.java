@@ -6,6 +6,7 @@ import com.wynprice.cafedafydd.common.Images;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketCreateUser;
 import com.wynprice.cafedafydd.common.utils.PasswordUtils;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -119,5 +120,10 @@ public class CreateUserPage implements BaseController {
 
     private Image getImage(boolean tick) {
         return (tick ? Images.GREEN_TICK : Images.RED_CROSS).getImage();
+    }
+
+    @FXML
+    public void goBack() {
+        CafeDafyddMain.back();
     }
 }
