@@ -1,8 +1,11 @@
-package com.wynprice.cafedafydd.common;
+package com.wynprice.cafedafydd.client.utils;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
 
+/**
+ * A class containing the
+ */
 public enum Images {
     GREEN_TICK("green_tick"),
     RED_CROSS("red_cross");

@@ -13,9 +13,16 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
+/**
+ * A util class containing the collectors used to collect streams.
+ */
 @Log4j2
 public class UtilCollectors {
 
+    /**
+     * Converts a stream of characters to a string.
+     * @return The collector to collect a stream of characters into a string.
+     */
     public static Collector<Character, StringBuilder, String> toStringCollector() {
         return new CollectorImpl<>(
             StringBuilder::new,
@@ -25,6 +32,12 @@ public class UtilCollectors {
         );
     }
 
+    /**
+     * Converts the input into an optional. If there is more than one entry in this stream, an error is logged
+     * and the item at index 0 is returned.
+     * @param <T> The type
+     * @return the collector to collect the stream into one optional.
+     */
     public static <T> Collector<T, List<T>, Optional<T>> toSingleEntry() {
         return delegateStream(list -> {
             if(list.isEmpty()) {
@@ -39,10 +52,13 @@ public class UtilCollectors {
         );
     }
 
-    public static Collector<String[], List<String[]>, Stream<Integer>> toFieldKey() {
-        return delegateStream(list -> list.stream().map(array -> array[0]).filter(s -> s.matches("\\d+")).map(Integer::parseInt));
-    }
-
+    /**
+     * Used to delegate the streams. Allows collectors to be used like extension methods on the stream object.
+     * @param func The function to use to return a new object
+     * @param <T> the input type
+     * @param <R> the output type
+     * @return the collector that converts the stream from one object to another.
+     */
     private static <T, R> Collector<T, List<T>, R> delegateStream(Function<List<T>, R> func)  {
         return new CollectorImpl<>(
             ArrayList::new,
@@ -51,6 +67,7 @@ public class UtilCollectors {
             func
         );
     }
+
 
     @Getter
     @Accessors(fluent = true)

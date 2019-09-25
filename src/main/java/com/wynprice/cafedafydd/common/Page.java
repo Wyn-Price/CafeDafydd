@@ -2,6 +2,9 @@ package com.wynprice.cafedafydd.common;
 
 import lombok.Getter;
 
+/**
+ * An enum class containing all the pages that are used.
+ */
 public enum Page {
     LOGIN_PAGE("login_page"),
     USER_PAGE("user_page"),

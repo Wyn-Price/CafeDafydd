@@ -11,10 +11,19 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.Getter;
 
+/**
+ * The client handler used for the setup of the client -> server connection.
+ */
 public class CafeDayfddClient {
 
+    /***
+     * The actual network handler
+     */
     @Getter private final ClientNetworkHandler handler;
 
+    /**
+     *  The channel object from the network. Used for shutting down the connection
+     */
     private final ChannelFuture endpoint;
 
     public CafeDayfddClient(String address) {
@@ -36,10 +45,16 @@ public class CafeDayfddClient {
             }).connect(address, 5671).syncUninterruptibly();
     }
 
+    /**
+     * Close the server
+     */
     public void close() {
         this.endpoint.channel().close().syncUninterruptibly();
     }
 
+    /**
+     * log out from the server.
+     */
     public void logout() {
         this.handler.setCurrentUsername(null);
         this.handler.sendPacket(new PacketLogout());

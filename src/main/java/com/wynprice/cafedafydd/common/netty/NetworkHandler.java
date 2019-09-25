@@ -9,16 +9,29 @@ import lombok.extern.log4j.Log4j2;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+/**
+ * The network handler used by both clients and servers.
+ */
 @Log4j2
 @RequiredArgsConstructor
 public class NetworkHandler extends SimpleChannelInboundHandler {
 
+    /**
+     * The network consumer. Used to delegate the packet handlers to the correct method
+     * annotated with {@link com.wynprice.cafedafydd.common.utils.NetworkHandle}
+     */
     private final NetworkConsumer networkConsumer;
 
+    /**
+     * The queue of handled packets. This is then polled on the network handling thread.
+     */
     private final Queue<Object> handleQueue = new ArrayDeque<>();
     @Getter
     private Channel activeChannel;
 
+    /**
+     * The thread used to handle the packets.
+     */
     private Thread handleThread;
 
     @Override
@@ -67,10 +80,17 @@ public class NetworkHandler extends SimpleChannelInboundHandler {
         this.activeChannel = null;
     }
 
+    /**
+     * @return whether the channel exists and is open
+     */
     public boolean isChannelOpen() {
         return this.activeChannel != null && this.activeChannel.isOpen();
     }
 
+    /**
+     * Send the packet to a server/client
+     * @param msg the packet to send
+     */
     public void sendPacket(Object msg) {
         if(this.isChannelOpen()) {
             if(this.activeChannel.eventLoop().inEventLoop()) {
@@ -81,6 +101,10 @@ public class NetworkHandler extends SimpleChannelInboundHandler {
         }
     }
 
+    /**
+     * dispatches the packet to the server/client
+     * @param msg the packet to send
+     */
     private void dispatchPacket(Object msg) {
         ChannelFuture future = this.activeChannel.writeAndFlush(msg);
         future.addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);

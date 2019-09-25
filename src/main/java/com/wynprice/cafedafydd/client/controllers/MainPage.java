@@ -26,7 +26,7 @@ public class MainPage implements BaseController{
         if(this.usernameField.getText().isEmpty() || this.passwordField.getText().isEmpty()) {
             FXUtils.showBasicAlert(Alert.AlertType.INFORMATION, "Input Error", "Password or Username fields are empty", ButtonType.OK);
         } else {
-            CafeDafyddMain.getClient().getHandler().sendPacket(new PacketLogin(this.usernameField.getText(), PasswordUtils.genetatePasswordHash(this.usernameField.getText(), this.passwordField.getText())));
+            CafeDafyddMain.getClient().getHandler().sendPacket(new PacketLogin(this.usernameField.getText(), PasswordUtils.generatePasswordHash(this.usernameField.getText(), this.passwordField.getText())));
         }
     }
 

@@ -1,5 +1,8 @@
 package com.wynprice.cafedafydd.common;
 
+/**
+ * A class containing all the database strings that are used in the databases.
+ */
 public class DatabaseStrings {
 
     public static final String ID = "record_id";

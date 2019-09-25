@@ -126,15 +126,13 @@ public class SearchUsersPage implements BaseController {
                     e.resync();
                     e.setTitle("Edit User");
                     e.setConsumer((hasUsername, username, hasEmail, email, hasPassword, passwordHash) -> {
-                        FormBuilder.INSTANCE
+                        FormBuilder form = FormBuilder.create()
                             .with(Users.USERNAME, username).when(hasUsername)
                             .with(Users.EMAIL, email).when(hasEmail)
                             .with(Users.PASSWORD_HASH, passwordHash).when(hasPassword);
 
-                        if(FormBuilder.INSTANCE.isEmpty()) {
-                            FormBuilder.INSTANCE.reset();
-                        } else {
-                            CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Users.FILE_NAME, item.id, FormBuilder.INSTANCE.getForm()));
+                        if(!form.isEmpty()) {
+                            CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Users.FILE_NAME, item.id, form.getForm()));
                         }
                         CafeDafyddMain.back();
                         CafeDafyddMain.getController(BaseController.class).ifPresent(BaseController::resync);

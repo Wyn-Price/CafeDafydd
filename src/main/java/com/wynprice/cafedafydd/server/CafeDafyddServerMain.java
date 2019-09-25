@@ -8,6 +8,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * The server handler used for the setup of the server -> client connections.
+ * This is also the server main class that gets invoked by the JVM
+ */
 @Log4j2
 public class CafeDafyddServerMain {
 

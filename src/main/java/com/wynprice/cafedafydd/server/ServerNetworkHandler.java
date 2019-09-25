@@ -202,7 +202,7 @@ public class ServerNetworkHandler extends NetworkHandler {
     }
 
     private void ensurePerms(PermissionLevel atLeast, String operation) {
-        if(this.permission == null || this.permission.getPerIndex() < atLeast.getPerIndex()) {
+        if(this.permission == null || this.permission.getPermIndex() < atLeast.getPermIndex()) {
             throw new PermissionException(atLeast, operation);
         }
     }

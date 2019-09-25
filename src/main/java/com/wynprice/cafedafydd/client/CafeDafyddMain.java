@@ -20,22 +20,38 @@ import java.util.Stack;
 @Log4j2
 public class CafeDafyddMain extends Application {
 
+    /**
+     * The current state
+     */
     private static Stage stage;
-    private static Stack<BaseController> controller = new Stack<>();
+
+    /**
+     * The controller of the current page
+     */
+    private static BaseController controller;
+
+    /**
+     * The stack of pages. Used to navigate with back buttons
+     */
     private static Stack<Page> pageHistory = new Stack<>();
 
+    /**
+     * The network client associated with this instance
+     */
     @Getter private static CafeDayfddClient client;
 
     public static void main(String[] args) {
+        //Create a new client and connect to the server, then launch the gui application
         client = new CafeDayfddClient("localhost");
         launch(CafeDafyddMain.class);
     }
+
 
     @Override
     public void start(Stage stage) {
         CafeDafyddMain.stage = stage;
         stage.setTitle("Cafe Dafydd");
-        stage.setScene(getScene(Page.LOGIN_PAGE, true).orElseThrow(IllegalArgumentException::new));
+        stage.setScene(getScene(Page.LOGIN_PAGE).orElseThrow(IllegalArgumentException::new));
         stage.show();
 
         stage.onCloseRequestProperty().set(event -> {
@@ -44,46 +60,35 @@ public class CafeDafyddMain extends Application {
         });
     }
 
-    public static void closeTopPage(Node node) {
-        node.getScene().getWindow().hide();
-        controller.pop();
-        pageHistory.pop();
-    }
-
+    /**
+     * Display the specified page
+     * @param page the display the page
+     */
     public static void showPage(Page page) {
-        getScene(page, false).ifPresent(stage::setScene);
+        getScene(page).ifPresent(stage::setScene);
     }
 
+    /**
+     * Move back in the page history.
+     */
     public static void back() {
         pageHistory.pop();
         showPage(pageHistory.peek());
         pageHistory.pop();
     }
 
-    public static void displayNewPage(Page page, String title) {
-        getScene(page, true).ifPresent(scene -> {
-                Stage stage = new Stage();
-
-                stage.initModality(Modality.WINDOW_MODAL);
-                stage.initOwner(CafeDafyddMain.stage);
-
-                stage.setTitle(title);
-                stage.setScene(scene);
-                stage.show();
-            }
-        );
-    }
-
-    private static Optional<Scene> getScene(Page page, boolean newPage) {
+    /**
+     * Gets the scene for the specified page
+     * @param page the page to get the scene from
+     * @return an optional of the scene for the {@code page}, or {@link Optional#empty()} if it couldn't be loaded for some reason.
+     */
+    private static Optional<Scene> getScene(Page page) {
         try {
             FXMLLoader loader = new FXMLLoader(CafeDafyddMain.class.getResource("/pages/" + page.getFileName() + ".fxml"));
             Parent loaded = loader.load();
-            if(!newPage) {
-                controller.pop();
-            }
             pageHistory.push(page);
-            controller.push(loader.getController());
-            controller.peek().onLoaded();
+            controller = loader.getController();
+            controller.onLoaded();
             return Optional.of(new Scene(loaded, loaded.prefWidth(500), loaded.prefHeight(275)));
         } catch (IOException e) {
             log.error("Unable to load page " + page + " for file " + page.getFileName(), e);
@@ -91,8 +96,14 @@ public class CafeDafyddMain extends Application {
         }
     }
 
+    /**
+     * Gets an optional of the controller. This will return an optional of the controller is an instance of @{controllerClass}
+     * @param controllerClass the controller class to check with. If the current controller is a subclass of this then a non empty optional will be returned
+     * @param <T> the controller class type
+     * @return a full optional of the controller, or {@link Optional#empty()} if the current controller isn't a instance of {@code T}
+     */
     @SuppressWarnings("unchecked")
     public static <T> Optional<T> getController(Class<T> controllerClass) {
-        return controllerClass.isInstance(controller.peek()) ? Optional.of((T)controller.peek()) : Optional.empty();
+        return controllerClass.isInstance(controller) ? Optional.of((T)controller) : Optional.empty();
     }
 }

@@ -5,6 +5,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 
+/**
+ * The packet encoder. Used for outbound packets.
+ * @see PacketRegistry
+ */
 public class NetworkDataEncoder extends MessageToByteEncoder<Object> {
 
     @Override

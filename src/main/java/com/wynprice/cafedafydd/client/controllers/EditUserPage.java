@@ -2,8 +2,7 @@ package com.wynprice.cafedafydd.client.controllers;
 
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
-import com.wynprice.cafedafydd.common.Images;
-import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketCreateUser;
+import com.wynprice.cafedafydd.client.utils.Images;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
 import com.wynprice.cafedafydd.common.utils.PasswordUtils;
@@ -16,7 +15,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.util.TriConsumer;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,7 +57,7 @@ public class EditUserPage implements BaseController {
                     } else {
                         this.errorField.setText("");
                     }
-                }), FormBuilder.INSTANCE.with(Users.USERNAME, newValue).without(ID, String.valueOf(this.id)));
+                }), FormBuilder.create().with(Users.USERNAME, newValue).without(ID, String.valueOf(this.id)));
             }
         });
 
@@ -76,7 +74,7 @@ public class EditUserPage implements BaseController {
                     } else {
                         this.errorField.setText("");
                     }
-                }), FormBuilder.INSTANCE.with(Users.EMAIL, newValue).without(ID, String.valueOf(this.id)));
+                }), FormBuilder.create().with(Users.EMAIL, newValue).without(ID, String.valueOf(this.id)));
             }
         });
 
@@ -133,7 +131,7 @@ public class EditUserPage implements BaseController {
         this.consumer.consume(
             this.greenTick(this.usernameImage), this.usernameField.getText(),
             this.greenTick(this.emailImage), this.emailField.getText(),
-            this.greenTick(this.passwordImage), PasswordUtils.genetatePasswordHash(this.usernameField.getText(), this.passwordField.getText())
+            this.greenTick(this.passwordImage), PasswordUtils.generatePasswordHash(this.usernameField.getText(), this.passwordField.getText())
         );
     }
 
