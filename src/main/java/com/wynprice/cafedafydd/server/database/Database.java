@@ -5,6 +5,8 @@ import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.UtilCollectors;
 import com.wynprice.cafedafydd.server.PermissionLevel;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -216,18 +219,7 @@ public abstract class Database {
      * @return the optional containing the found record, or {@link Optional#empty()} if none could be found.
      */
     public Optional<DatabaseRecord> getEntryFromId(int id) {
-        return Algorithms.doMappedSearch(this.indexedRecords.get(DatabaseStrings.ID), DatabaseRecord::getPrimaryField, id, Integer::compareTo);
-    }
-
-    /**
-     * Gets a single entry from the form.
-     * @param form the form to use
-     * @return the optional containing the found record, or {@link Optional#empty()} if none could be found.
-     * @see com.wynprice.cafedafydd.common.utils.FormBuilder
-     * @see UtilCollectors#toSingleEntry()
-     */
-    public Optional<DatabaseRecord> getSingleEntry(String... form) {
-        return this.getEntries(form).collect(UtilCollectors.toSingleEntry());
+        return Algorithms.doMappedSearch(this.indexedRecords.get(DatabaseStrings.ID), DatabaseRecord::getPrimaryField, id, Comparator.comparing(String::valueOf));
     }
 
     /**
@@ -257,37 +249,77 @@ public abstract class Database {
      * @return
      */
     private Stream<DatabaseRecord> streamEntries(Comparator<String> comparator, String... form) {
+        if(this.entries.isEmpty() || form.length == 0) {
+            return Stream.empty();
+        }
+        Iterator<String> iterator = Arrays.stream(form).iterator();
         List<DatabaseRecord> list = new ArrayList<>(this.entries);
-        for (int i = 0; i < form.length; i+=2) {
+        while (iterator.hasNext()) {
             //If the form object equals NOT_PREFIX, then invert the search and move the index along to the next position.
             boolean inverted = false;
-            if(form[i].equals(DatabaseStrings.NOT_PREFIX)) {
-                i++;
+
+            String field = iterator.next();
+            if(field.equals(DatabaseStrings.NOT_PREFIX)) {
+                field = iterator.next();
                 inverted = true;
             }
             //Damn you lambda statements
-            String finalField = form[i];
+            String finalField = field;
             boolean finalInverted = inverted;
+
+            String formValue = iterator.next();
+
+            if(formValue.equals(DatabaseStrings.INLINE_REQUEST_PREFIX)) {
+                Optional<String> inlineFormValue = this.getInlineFormValue(comparator, iterator);
+                if(inlineFormValue.isPresent()) {
+                    formValue = inlineFormValue.get();
+                } else {
+                    return Stream.empty();
+                }
+            }
 
             //Get the found entries for this section of the form, and then go through the current list
             //and if the form entry is inverted, removed them if the found entries contains the entry, otherwise
             //remove the element if the found entries doesn't contain it.
-            List<DatabaseRecord> foundRecords = Algorithms.splicedBinarySearch(this.indexedRecords.get(finalField), r -> r.getField(finalField), form[i + 1], comparator);
+            List<DatabaseRecord> foundRecords = Algorithms.splicedBinarySearch(this.indexedRecords.get(finalField), r -> r.getField(finalField), formValue, comparator);
             list.removeIf(r -> finalInverted == foundRecords.contains(r));
         }
         return list.stream();
     }
 
+    private Optional<String> getInlineFormValue(Comparator<String> comparator, Iterator<String> iterator) {
+        Optional<Database> file = Databases.getFromFile(iterator.next());
+        String field = iterator.next();
+        String fieldSizeLength = iterator.next();
+
+        int length;
+        try {
+            length = Integer.parseInt(fieldSizeLength);
+        } catch (NumberFormatException e) {
+            log.error("Tried to skip inline request with length: " + fieldSizeLength + " but that is not a number.");
+            return Optional.empty();
+        }
+
+        if(file.isPresent()) {
+            String[] form = IntStream.range(0, length).mapToObj(i -> iterator.next()).toArray(String[]::new);
+            return file.flatMap(d -> d.streamEntries(comparator, form).collect(UtilCollectors.toSingleEntry())).map(r -> r.getField(field));
+        }
+        for (int i = 0; i < length; i++) {
+            iterator.next();
+        }
+        return Optional.empty();
+    }
+
     /**
      * Creates and adds a new database entry.
-     * @param formatFields this is in the same format as all forms, but cannot contain {@link DatabaseStrings#NOT_PREFIX}
+     * @param form this is in the same format as all forms, but cannot contain {@link DatabaseStrings#NOT_PREFIX}
      * @return the generated record.
      * @see com.wynprice.cafedafydd.common.utils.FormBuilder
      */
-    public DatabaseRecord generateAndAddDatabase(String... formatFields) {
+    public DatabaseRecord generateAndAddDatabase(String... form) {
         //Check for mismatched inputs
-        if(formatFields.length % 2 != 0) {
-            throw new IllegalArgumentException("Mismatched input in database generation " + this.path.getName(-1) + ". Fields: " + this.fields.toString() + ", input arguments" + Arrays.toString(formatFields)
+        if(form.length % 2 != 0) {
+            throw new IllegalArgumentException("Mismatched input in database generation " + this.path.getName(-1) + ". Fields: " + this.fields.toString() + ", input arguments" + Arrays.toString(form)
                 + ". Input data should be in the format: `<KEY1>, <VALUE1>, <KEY2>, <VALUE2>...`");
         }
         //Create the new backing array and get the current maximum id + 1. TODO: maybe get the lowest available id, instead of the max + 1
@@ -295,10 +327,10 @@ public abstract class Database {
         int newId = this.entries.stream().map(DatabaseRecord::getPrimaryField).mapToInt(i -> i).max().orElse(0) + 1;
 
         //Go through all the form entries and set the fields in the entry to be the field value.
-        //The indexOf stuff is to ensure that it all gets put in the right place, as the input formatFields
+        //The indexOf stuff is to ensure that it all gets put in the right place, as the input form
         //Doesn't necessarily have to be in the same order as the actual fields.
-        for (int i = 0; i < formatFields.length; i+=2) {
-            entry[this.fields.indexOf(formatFields[i])] = formatFields[i + 1];
+        for (int i = 0; i < form.length; i+=2) {
+            entry[this.fields.indexOf(form[i])] = form[i + 1];
         }
 
         //If any of the entries haven't been set then just set them to an empty string
@@ -413,6 +445,4 @@ public abstract class Database {
     public String[] getPrimaryFields() {
         return new String[0];
     }
-
-
 }

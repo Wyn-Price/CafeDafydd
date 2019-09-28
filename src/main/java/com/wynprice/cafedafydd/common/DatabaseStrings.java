@@ -7,6 +7,7 @@ public class DatabaseStrings {
 
     public static final String ID = "record_id";
     public static final String NOT_PREFIX = "$$NOT$$";
+    public static final String INLINE_REQUEST_PREFIX = "$$INLINEREQUEST$$";
 
     public static class Users {
         public static final String FILE_NAME = "users";
@@ -24,6 +25,8 @@ public class DatabaseStrings {
         public static final String COMPUTER_ID = "computer_id";
         public static final String ISO8601_START = "startime";
         public static final String ISO8601_END = "endtime";
+        public static final String CALCULATED_PRICE = "price";
+        public static final String PAID = "has_paid";
     }
 
     public static class Computers {

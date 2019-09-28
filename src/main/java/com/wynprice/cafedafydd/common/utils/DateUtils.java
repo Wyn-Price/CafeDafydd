@@ -5,8 +5,8 @@ import lombok.extern.log4j.Log4j2;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.Date;
-import java.util.TimeZone;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A util class for using dates.
@@ -54,5 +54,73 @@ public class DateUtils {
      */
     public static Date getCurrentDate() {
         return Date.from(Instant.now());
+    }
+
+    /**
+     * Converts d1 - d2 to a length string. TODO: MORE DOCUMENTATION
+     * <pre>{@code
+     *
+     * getStringDifference(new Date(0), new Date(1000))         -> <No Time>
+     * getStringDifference(new Date(0), new Date(0))            -> 1 second
+     * getStringDifference(new Date(0), new Date(5000))         -> 5 seconds
+     * getStringDifference(new Date(0), new Date(331000))       -> 5 minutes and 31 seconds
+     * getStringDifference(new Date(0), new Date(86731000))     -> 1 day, 5 minutes and 31 seconds
+     *
+     * }</pre>
+     * @param d1 the first date
+     * @param d2 the second date, to subtract from the first date
+     * @return the difference between the two dates in English terms.
+     */
+    public static String getStringDifference(Date d1, Date d2) {
+        long time = d1.getTime() - d2.getTime();
+
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(time);
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(time);
+        long hours = TimeUnit.MILLISECONDS.toHours(time);
+        long days = TimeUnit.MILLISECONDS.toDays(time); //Will anyone ever game for over days?
+
+
+        List<String> resultList = new LinkedList<>();
+
+        if(days != 0) {
+            resultList.add(days + " day" + (Math.abs(days) == 1 ? "" : "s"));
+        }
+        if(hours != 0) {
+            resultList.add(hours % 24 + " hour" + (Math.abs(hours) == 1 ? "" : "s"));
+        }
+        if(minutes != 0) {
+            resultList.add(minutes % 60 + " minute" + (Math.abs(minutes) == 1 ? "" : "s"));
+        }
+        if(seconds != 0) {
+            resultList.add(seconds % 60 + " second" + (Math.abs(seconds) == 1 ? "" : "s"));
+        }
+
+
+        if(resultList.isEmpty()) {
+            return "<No Time>";
+        }
+        if(resultList.size() == 1) {
+            return resultList.get(0);
+        }
+
+
+        StringBuilder builder = new StringBuilder();
+        Iterator<String> iterator = resultList.iterator();
+
+        boolean first = true;
+        while (iterator.hasNext()) {
+            String next = iterator.next();
+            if (iterator.hasNext()) {
+                if(!first) {
+                    builder.append(", ");
+                }
+                builder.append(next);
+                first = false;
+            } else {
+                builder.append(" and ").append(next);
+            }
+        }
+
+        return builder.toString();
     }
 }

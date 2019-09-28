@@ -11,6 +11,7 @@ public enum Page {
     CHANGE_PASSWORD("change_password_page"),
 
     CREATE_SESSION("create_session"),
+    SEARCH_SESSION("search_sessions"),
 
     EDIT_USER_PAGE("edit_user"),
     SEARCH_USERS_PAGE("search_users"),

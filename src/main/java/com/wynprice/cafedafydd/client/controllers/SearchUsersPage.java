@@ -47,18 +47,15 @@ public class SearchUsersPage implements BaseController {
         //Delay the task, to make sure that the text fields have the right data set.
         //This method is called BEFORE the text fields are updated, thus we need to wait
         Platform.runLater(() -> {
-            List<String> form = new ArrayList<>();
+            FormBuilder form = FormBuilder.create();
             if(!this.usernameText.getText().isEmpty()) {
-                form.add(Users.USERNAME);
-                form.add(this.usernameText.getText());
+                form.with(Users.USERNAME, this.usernameText.getText());
             }
             if(!this.emailText.getText().isEmpty()) {
-                form.add(Users.EMAIL);
-                form.add(this.emailText.getText());
+                form.with(Users.EMAIL, this.emailText.getText());
             }
             if(this.permissionComboBox.getValue() != null && !this.permissionComboBox.getValue().isEmpty()) {
-                form.add(Users.PERMISSION_LEVEL);
-                form.add(this.permissionComboBox.getValue());
+                form.with(Users.PERMISSION_LEVEL, this.permissionComboBox.getValue());
             }
 
             if(form.isEmpty()) {
@@ -80,7 +77,7 @@ public class SearchUsersPage implements BaseController {
                         ));
                     }
                 }),
-                form.toArray(new String[0])
+                form.getForm()
             );
         });
     }

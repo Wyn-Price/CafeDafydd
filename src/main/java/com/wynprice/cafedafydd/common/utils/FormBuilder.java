@@ -3,6 +3,7 @@ package com.wynprice.cafedafydd.common.utils;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FormBuilder {
@@ -20,6 +21,17 @@ public class FormBuilder {
         this.form.add(field);
         this.form.add(value);
         this.prevLen = 2;
+        return this;
+    }
+
+    public FormBuilder withInline(String field, String requestDatabase, String requestDatabaseField, String... form) {
+        this.form.add(field);
+        this.form.add(DatabaseStrings.INLINE_REQUEST_PREFIX);
+        this.form.add(requestDatabase);
+        this.form.add(requestDatabaseField);
+        this.form.add(String.valueOf(form.length));
+        Collections.addAll(this.form, form);
+        this.prevLen = 5 + form.length;
         return this;
     }
 

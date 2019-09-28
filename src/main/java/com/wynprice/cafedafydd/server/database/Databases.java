@@ -66,7 +66,7 @@ public abstract class Databases {
 
         @Override
         protected String[] getFields() {
-            return new String[]{ Sessions.USER_ID, Sessions.COMPUTER_ID, Sessions.ISO8601_START, Sessions.ISO8601_END };
+            return new String[]{ Sessions.USER_ID, Sessions.COMPUTER_ID, Sessions.ISO8601_START, Sessions.ISO8601_END, Sessions.CALCULATED_PRICE, Sessions.PAID };
         }
 
         @Override

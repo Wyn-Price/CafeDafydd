@@ -1,15 +1,11 @@
 package com.wynprice.cafedafydd.server;
 
-import com.wynprice.cafedafydd.common.utils.DateUtils;
+import com.wynprice.cafedafydd.common.utils.*;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.Page;
 import com.wynprice.cafedafydd.common.netty.NetworkHandler;
 import com.wynprice.cafedafydd.common.netty.packets.clientbound.*;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.*;
-import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
-import com.wynprice.cafedafydd.common.utils.NetworkConsumer;
-import com.wynprice.cafedafydd.common.utils.NetworkHandle;
-import com.wynprice.cafedafydd.common.utils.NetworkHandleScanner;
 import com.wynprice.cafedafydd.server.database.Database;
 import com.wynprice.cafedafydd.server.database.Databases;
 import com.wynprice.cafedafydd.server.utils.PermissionException;
@@ -42,7 +38,7 @@ public class ServerNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleLogin(PacketLogin login) {
-        Optional<DatabaseRecord> entry = Databases.USERS.getSingleEntry(Users.USERNAME, login.getUsername(), Users.PASSWORD_HASH, login.getPasswordHash());
+        Optional<DatabaseRecord> entry = Databases.USERS.getEntries(Users.USERNAME, login.getUsername(), Users.PASSWORD_HASH, login.getPasswordHash()).collect(UtilCollectors.toSingleEntry());
         if(!entry.isPresent()) {
             this.sendPacket(new PacketDisplayError("Invalid Credentials", "Username or Password is incorrect.\nPlease contact a member of staff to change your password"));
             return;
@@ -75,20 +71,24 @@ public class ServerNetworkHandler extends NetworkHandler {
         if(fromFile.isPresent()) {
             Database database = fromFile.get();
             this.ensurePerms(database.getReadLevel(), "Database Lookup");
-            this.sendPacket(new PacketHasDatabaseEntryResult(hasEntry.getRequestID(), database.hasAllEntries(parseForm(hasEntry.getForm()))));
+            this.sendPacket(new PacketHasDatabaseEntryResult(hasEntry.getRequestID(), database.hasAllEntries(replaceFormUserId(hasEntry.getForm()))));
         } else {
             log.error("Requested database file " + hasEntry.getDatabaseFile() + " but it could not be found. ");
         }
     }
 
     @NetworkHandle
-    public void handleCreateUser(PacketCreateUser createUser) {
+    public void handleCreateUser(PacketCreateUser packet) {
         this.ensurePerms(PermissionLevel.STAFF_MEMBER, "Create User");
-        if (Databases.USERS.hasAllEntries(Users.USERNAME, createUser.getUsername()) || Databases.USERS.hasAllEntries(Users.EMAIL, createUser.getEmail())) {
+        if (Databases.USERS.hasAllEntries(Users.USERNAME, packet.getUsername()) || Databases.USERS.hasAllEntries(Users.EMAIL, packet.getEmail())) {
             this.sendPacket(new PacketDisplayError("Creation Error", "Username or email already exists in database."));
             return;
         }
-        Databases.USERS.generateAndAddDatabase(Users.USERNAME, createUser.getUsername(), Users.EMAIL, createUser.getEmail(), Users.PASSWORD_HASH, createUser.getPasswordHash(), Users.PERMISSION_LEVEL, PermissionLevel.USER.name());
+        Databases.USERS.generateAndAddDatabase(
+            Users.USERNAME, packet.getUsername(),
+            Users.EMAIL, packet.getEmail(),
+            Users.PASSWORD_HASH, packet.getPasswordHash(),
+            Users.PERMISSION_LEVEL, PermissionLevel.values()[packet.getPermissionCreatorLevel()].name());
     }
 
     @NetworkHandle
@@ -118,7 +118,7 @@ public class ServerNetworkHandler extends NetworkHandler {
         this.ensurePerms(db.getReadLevel(), "Database Lookup");
         this.sendPacket(
             new PacketDatabaseEntriesResult(packet.getType(), packet.getRequestID(), db.getFieldList(),
-            (packet.getType().isSearch() ? db.searchEntries(parseForm(packet.getRequestForm())) : db.getEntries(parseForm(packet.getRequestForm()))).collect(Collectors.toList()))
+            (packet.getType().isSearch() ? db.searchEntries(replaceFormUserId(packet.getRequestForm())) : db.getEntries(replaceFormUserId(packet.getRequestForm()))).collect(Collectors.toList()))
         );
     }
 
@@ -177,7 +177,7 @@ public class ServerNetworkHandler extends NetworkHandler {
                     this.sendPacket(new PacketDisplayError("Unable Editing Database", "Cannot edit that record. Database prevented editing of it with permission " + this.permission));
                     return;
                 }
-                String[] form = packet.getForm();
+                String[] form = this.replaceFormUserId(packet.getForm());
                 for (int i = 0; i < form.length; i+=2) {
                     boolean primary = Arrays.asList(db.getPrimaryFields()).contains(form[i]);
                     if(primary) {
@@ -189,6 +189,7 @@ public class ServerNetworkHandler extends NetworkHandler {
                     }
                     dr.setField(form[i], form[i+1]);
                 }
+                this.sendPacket(new PacketCauseResync());
             } else {
                 this.sendPacket(new PacketDisplayError("Unable to edit database", "Could not find record with id " + packet.getRecordID() + " for database " + packet.getDatabase()));
             }
@@ -197,7 +198,7 @@ public class ServerNetworkHandler extends NetworkHandler {
         }
     }
 
-    private String[] parseForm(String... form) {
+    private String[] replaceFormUserId(String... form) {
         return Arrays.stream(form).map(s -> s.replaceAll("\\Q$$userid\\E", String.valueOf(this.userID))).toArray(String[]::new);
     }
 
