@@ -72,9 +72,11 @@ public class CafeDafyddMain extends Application {
      * Move back in the page history.
      */
     public static void back() {
+        //Pop the top most page history.
         pageHistory.pop();
-        showPage(pageHistory.peek());
-        pageHistory.pop();
+
+        //Show and remove the now top-most page. This then gets pushed back at #getScene
+        showPage(pageHistory.pop());
     }
 
     /**
