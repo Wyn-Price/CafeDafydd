@@ -3,6 +3,7 @@ package com.wynprice.cafedafydd.client.controllers;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.controllers.data.Session;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
+import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketTryEditDatabase;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
@@ -20,7 +21,7 @@ public class SearchSessionsPage implements BaseController {
     @FXML public ListView<Session> searchResult;
     @FXML public TextField usernameText;
     @FXML public Button payingButton;
-    @FXML public ComboBox paidStateBox;
+    @FXML public ComboBox<String> paidStateBox;
 
     @Override
     public void onLoaded() {
@@ -29,7 +30,7 @@ public class SearchSessionsPage implements BaseController {
         this.paidStateBox.getSelectionModel().select(0);
 
         this.searchResult.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-            if(newValue.intValue() >= 0) {
+            if(newValue.intValue() >= 0 && this.paidStateBox.getSelectionModel().getSelectedIndex() > 1) {
                 this.payingButton.setDisable(false);
                 this.payingButton.setText(this.searchResult.getItems().get(newValue.intValue()).isHasPaid() ? "Set unpaid" : "Set Paid");
             } else {
@@ -59,7 +60,22 @@ public class SearchSessionsPage implements BaseController {
                 form.withInline(Sessions.USER_ID, Users.FILE_NAME, ID, Users.USERNAME, this.usernameText.getText());
             }
             if(this.paidStateBox.getSelectionModel().getSelectedIndex() > 0) {
-                form.with(Sessions.PAID, String.valueOf(this.paidStateBox.getSelectionModel().getSelectedIndex()==1?1:0));
+                // 0 -> null
+                // 1 -> Active
+                // 2 -> Paid
+                // 3 -> Not Paid
+
+                switch (this.paidStateBox.getSelectionModel().getSelectedIndex()) {
+                    case 1:
+                        form.with(Sessions.ISO8601_END, Sessions.HASNT_ENDED);
+                        break;
+                    case 2:
+                        form.with(Sessions.PAID, "1");
+                        break;
+                    case 3:
+                        form.with(Sessions.PAID, "0");
+                        break;
+                }
             }
 
             if(form.isEmpty()) {

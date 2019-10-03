@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" minHeight="210.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="com.wynprice.cafedafydd.client.controllers.AdministratorPage">
+  <children>
+    <GridPane prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <children>
+        <Label text="Cafe Dayfdd Administrator Panel" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="0">
+          <font>
+            <Font name="Arial" size="24.0" />
+          </font>
+        </Label>
+        <Button defaultButton="true" onAction="#onLogout" prefHeight="40.0" prefWidth="100.0" text="Log Out" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="4" GridPane.rowSpan="1">
+          <GridPane.margin>
+            <Insets bottom="20.0" top="20.0" />
+          </GridPane.margin>
+        </Button>
+        <Button defaultButton="true" onAction="#onAddUser" prefHeight="40.0" prefWidth="200.0" text="Add User" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="1" />
+        <Button defaultButton="true" onAction="#onSearchSessions" prefHeight="40.0" prefWidth="200.0" text="Search Sessions" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
+        <Button defaultButton="true" onAction="#onEditUser" prefHeight="40.0" prefWidth="200.0" text="Search Users" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
+      </children>
+      <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="250.0" />
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="250.0" />
+      </columnConstraints>
+      <rowConstraints>
+        <RowConstraints maxHeight="75.0" minHeight="-Infinity" prefHeight="75.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="75.0" minHeight="-Infinity" prefHeight="75.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="75.0" minHeight="-Infinity" prefHeight="75.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="0.0" prefHeight="0.0" />
+        <RowConstraints maxHeight="80.0" prefHeight="80.0" />
+      </rowConstraints>
+    </GridPane>
+  </children>
+</AnchorPane>

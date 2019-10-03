@@ -27,6 +27,8 @@ public class DatabaseStrings {
         public static final String ISO8601_END = "endtime";
         public static final String CALCULATED_PRICE = "price";
         public static final String PAID = "has_paid";
+
+        public static final String HASNT_ENDED = "notend";
     }
 
     public static class Computers {
@@ -34,8 +36,7 @@ public class DatabaseStrings {
 
         public static final String OS = "os";
         public static final String SESSION_ID = "session_id";
-
-        public static final String HASNT_ENDED = "notend";
+        public static final String PRICE_PER_HOUR = "pph";
     }
 
 }

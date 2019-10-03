@@ -249,8 +249,11 @@ public abstract class Database {
      * @return
      */
     private Stream<DatabaseRecord> streamEntries(Comparator<String> comparator, String... form) {
-        if(this.entries.isEmpty() || form.length == 0) {
+        if(this.entries.isEmpty() ) {
             return Stream.empty();
+        }
+        if(form.length == 0) {
+            return this.entries.stream();
         }
         Iterator<String> iterator = Arrays.stream(form).iterator();
         List<DatabaseRecord> list = new ArrayList<>(this.entries);
@@ -421,10 +424,22 @@ public abstract class Database {
     /**
      * Used for permission levels based on individual records
      * @param record the record to check
+     * @param userID the user id to check with
+     * @param level the permission level to check with
+     * @return true if they can read it, false if otherwise.
+     */
+    public boolean canRead(DatabaseRecord record, int userID, PermissionLevel level) {
+        return true;
+    }
+
+    /**
+     * Used for permission levels based on individual records
+     * @param record the record to check
+     * @param userID the user id to check with
      * @param level the permission level to check with
      * @return true if they can edit it, false if otherwise.
      */
-    public boolean canEdit(DatabaseRecord record, PermissionLevel level) {
+    public boolean canEdit(DatabaseRecord record, int userID, PermissionLevel level) {
         return true;
     }
 

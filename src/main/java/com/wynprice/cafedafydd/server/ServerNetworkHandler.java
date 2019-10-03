@@ -12,7 +12,9 @@ import com.wynprice.cafedafydd.server.utils.PermissionException;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.wynprice.cafedafydd.common.DatabaseStrings.Users;
@@ -48,9 +50,10 @@ public class ServerNetworkHandler extends NetworkHandler {
 
         switch (this.permission) {
             case USER:
-            case STAFF_MEMBER:
-//            case ADMINISTRATOR:
                 this.sendPacket(new PacketDisplayScreen(Page.USER_PAGE));
+                break;
+            case STAFF_MEMBER:
+                this.sendPacket(new PacketDisplayScreen(Page.STAFF_PANEL));
                 break;
             case ADMINISTRATOR:
                 this.sendPacket(new PacketDisplayScreen(Page.ADMINISTRATOR_PAGE));
@@ -70,7 +73,7 @@ public class ServerNetworkHandler extends NetworkHandler {
         Optional<Database> fromFile = Databases.getFromFile(hasEntry.getDatabaseFile());
         if(fromFile.isPresent()) {
             Database database = fromFile.get();
-            this.ensurePerms(database.getReadLevel(), "Database Lookup");
+            this.ensurePerms(database.getReadLevel(), "Database Lookup " + hasEntry.getDatabaseFile());
             this.sendPacket(new PacketHasDatabaseEntryResult(hasEntry.getRequestID(), database.hasAllEntries(replaceFormUserId(hasEntry.getForm()))));
         } else {
             log.error("Requested database file " + hasEntry.getDatabaseFile() + " but it could not be found. ");
@@ -115,10 +118,11 @@ public class ServerNetworkHandler extends NetworkHandler {
             return;
         }
         Database db = database.get();
-        this.ensurePerms(db.getReadLevel(), "Database Lookup");
+        this.ensurePerms(db.getReadLevel(), "Database Lookup " + packet.getDatabase());
         this.sendPacket(
             new PacketDatabaseEntriesResult(packet.getType(), packet.getRequestID(), db.getFieldList(),
-            (packet.getType().isSearch() ? db.searchEntries(replaceFormUserId(packet.getRequestForm())) : db.getEntries(replaceFormUserId(packet.getRequestForm()))).collect(Collectors.toList()))
+            (packet.getType().isSearch() ? db.searchEntries(replaceFormUserId(packet.getRequestForm())) : db.getEntries(replaceFormUserId(packet.getRequestForm())))
+                .filter(r -> db.canRead(r, this.userID, this.permission)).collect(Collectors.toList()))
         );
     }
 
@@ -130,7 +134,7 @@ public class ServerNetworkHandler extends NetworkHandler {
                 DatabaseStrings.Sessions.USER_ID, String.valueOf(this.userID),
                 DatabaseStrings.Sessions.COMPUTER_ID, String.valueOf(packet.getComputerID()),
                 DatabaseStrings.Sessions.ISO8601_START, DateUtils.toISO8691(DateUtils.getCurrentDate()),
-                DatabaseStrings.Sessions.ISO8601_END, DatabaseStrings.Computers.HASNT_ENDED
+                DatabaseStrings.Sessions.ISO8601_END, DatabaseStrings.Sessions.HASNT_ENDED
             );
             entry.get().setField(DatabaseStrings.Computers.SESSION_ID, String.valueOf(record.getPrimaryField()));
         } else {
@@ -142,7 +146,7 @@ public class ServerNetworkHandler extends NetworkHandler {
     @NetworkHandle
     public void handleCanStartSession(PacketCanStartSession packet) {
         //Find if there are any computers with no sessions, if there are, set the client to create session page, otherwise display an error
-        if(Databases.COMPUTERS.getEntries().anyMatch(r -> "-1".equals(r.getField(DatabaseStrings.Computers.SESSION_ID)))) {
+        if(Databases.COMPUTERS.getEntries(DatabaseStrings.Computers.SESSION_ID, "-1").count() > 0) {
             this.sendPacket(new PacketDisplayScreen(Page.CREATE_SESSION));
         } else {
             this.sendPacket(new PacketDisplayError("Unable to start session", "There are no computers available :("));
@@ -154,9 +158,21 @@ public class ServerNetworkHandler extends NetworkHandler {
         Optional<DatabaseRecord> entry = Databases.SESSIONS.getEntryFromId(packet.getSessionID());
         if(entry.isPresent()) {
             DatabaseRecord record = entry.get();
-            record.setField(DatabaseStrings.Sessions.ISO8601_END, DateUtils.toISO8691(DateUtils.getCurrentDate()));
-            //Log an error if there is not computer found? It *shouldn't* happen
-            Databases.COMPUTERS.getEntryFromId(Integer.parseInt(record.getField(DatabaseStrings.Sessions.COMPUTER_ID))).ifPresent(r -> r.setField(DatabaseStrings.Computers.SESSION_ID, "-1"));
+            Date date = DateUtils.getCurrentDate();
+            Date startDate = DateUtils.fromISO8691(record.getField(DatabaseStrings.Sessions.ISO8601_START), true);
+
+            //Calculate the price based on the hours spent on the session, and the price per hour.
+            //Maybe log an error if there is not computer found? It *shouldn't* happen
+            double price = Databases.COMPUTERS.getEntryFromId(Integer.parseInt(record.getField(DatabaseStrings.Sessions.COMPUTER_ID))).map(r -> {
+                r.setField(DatabaseStrings.Computers.SESSION_ID, "-1");
+                //3.6e+6 -> How many milliseconds in an hour
+                return Double.parseDouble(r.getField(DatabaseStrings.Computers.PRICE_PER_HOUR)) * (date.getTime() - startDate.getTime()) / 3.6e+6D;
+            }).orElse(-1D);
+
+            record.setField(DatabaseStrings.Sessions.ISO8601_END, DateUtils.toISO8691(date));
+            //the * 100 and / 100 is to get it to 2 decimal places
+            record.setField(DatabaseStrings.Sessions.CALCULATED_PRICE, String.valueOf(Math.round(price * 100D) / 100D));
+            record.setField(DatabaseStrings.Sessions.PAID, "0");
 
             this.sendPacket(new PacketCauseResync());
         } else {
@@ -173,7 +189,7 @@ public class ServerNetworkHandler extends NetworkHandler {
             Optional<DatabaseRecord> record = database.flatMap(d -> d.getEntryFromId(packet.getRecordID()));
             if(record.isPresent()) {
                 DatabaseRecord dr = record.get();
-                if(!db.canEdit(dr, this.permission)) {
+                if(!db.canEdit(dr, this.userID, this.permission)) {
                     this.sendPacket(new PacketDisplayError("Unable Editing Database", "Cannot edit that record. Database prevented editing of it with permission " + this.permission));
                     return;
                 }

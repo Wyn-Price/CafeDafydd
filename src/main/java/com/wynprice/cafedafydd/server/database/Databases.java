@@ -52,8 +52,8 @@ public abstract class Databases {
         }
 
         @Override
-        public boolean canEdit(DatabaseRecord record, PermissionLevel level) {
-            return PermissionLevel.valueOf(record.getField(Users.PERMISSION_LEVEL)).getPermIndex() < level.getPermIndex();
+        public boolean canEdit(DatabaseRecord record, int userID, PermissionLevel level) {
+            return PermissionLevel.valueOf(record.getField(Users.PERMISSION_LEVEL)).getPermIndex() < level.getPermIndex() || level == PermissionLevel.ADMINISTRATOR;
         }
     }
 
@@ -73,6 +73,16 @@ public abstract class Databases {
         public String[] getPrimaryFields() {
             return new String[0];
         }
+
+        @Override
+        public PermissionLevel getReadLevel() {
+            return PermissionLevel.USER;
+        }
+
+        @Override
+        public boolean canRead(DatabaseRecord record, int userID, PermissionLevel level) {
+            return record.getField(Sessions.USER_ID).equals(String.valueOf(userID)) || level.getPermIndex() >= PermissionLevel.STAFF_MEMBER.getPermIndex();
+        }
     }
 
     private static final class ComputersDatabase extends Database {
@@ -84,12 +94,17 @@ public abstract class Databases {
 
         @Override
         protected String[] getFields() {
-            return new String[]{ Computers.OS, Computers.SESSION_ID };
+            return new String[]{ Computers.OS, Computers.SESSION_ID, Computers.PRICE_PER_HOUR };
         }
 
         @Override
         public PermissionLevel getEditLevel() {
             return PermissionLevel.ADMINISTRATOR;
+        }
+
+        @Override
+        public PermissionLevel getReadLevel() {
+            return PermissionLevel.USER;
         }
     }
 

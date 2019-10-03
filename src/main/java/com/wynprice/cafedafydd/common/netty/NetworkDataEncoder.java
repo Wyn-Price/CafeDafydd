@@ -13,7 +13,7 @@ public class NetworkDataEncoder extends MessageToByteEncoder<Object> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) {
-        PacketEntry<Object> entry = PacketRegistry.INSTANCE.getEntry(msg);
+        PacketEntry<Object> entry = PacketRegistry.getEntry(msg);
         out.writeByte(entry.getIndex());
         entry.getEncoder().accept(msg, out);
     }

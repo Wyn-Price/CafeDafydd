@@ -31,7 +31,7 @@
     <RowConstraints maxHeight="200.0" minHeight="200.0" />
     <RowConstraints maxHeight="80.0" prefHeight="80.0" />
   </rowConstraints>
-  <Label text="Cafe Dafydd User Search" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.halignment="CENTER" GridPane.rowIndex="0" GridPane.rowSpan="1">
+  <Label text="Cafe Dafydd Sessions Search" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.halignment="CENTER" GridPane.rowIndex="0" GridPane.rowSpan="1">
     <font>
       <Font name="Arial" size="24.0" />
     </font>
@@ -69,11 +69,12 @@
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
     </rowConstraints>
-    <Label text="Paid State" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
+    <Label text="State" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
     <ComboBox fx:id="paidStateBox" onAction="#doSearch" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="1">
       <items>
         <FXCollections fx:factory="observableArrayList">
           <String fx:value="" />
+          <String fx:value="Active" />
           <String fx:value="Paid" />
           <String fx:value="Not Paid" />
         </FXCollections>

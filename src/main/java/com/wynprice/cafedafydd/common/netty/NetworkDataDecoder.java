@@ -14,7 +14,7 @@ import java.util.List;
 public class NetworkDataDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
-        PacketEntry<?> entry = PacketRegistry.INSTANCE.getEntry(in.readByte());
+        PacketEntry<?> entry = PacketRegistry.getEntry(in.readByte());
         out.add(entry.getDecoder().apply(in));
     }
 }
