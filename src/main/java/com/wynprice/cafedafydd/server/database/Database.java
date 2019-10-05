@@ -7,7 +7,6 @@ import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.common.utils.UtilCollectors;
 import com.wynprice.cafedafydd.server.PermissionLevel;
-import com.wynprice.cafedafydd.common.entries.EmptyRecord;
 import com.wynprice.cafedafydd.common.entries.InlineEntry;
 import com.wynprice.cafedafydd.common.entries.NotEntry;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
@@ -65,7 +64,7 @@ public abstract class Database {
         this.path = Paths.get("databases").resolve(this.getFilename() + ".csv");
 
         //If the file exists try and load from it. Save the file then to ensure the file exists
-        if(Files.exists(this.path)) {
+        if(this.path.toFile().exists()) {
             try {
                 List<String> lines = Files.readAllLines(this.path);
                 List<String> fileFields = ArrayUtils.asList(lines.remove(0).split(","));
@@ -148,7 +147,7 @@ public abstract class Database {
         this.entries.add(new ObservedDatabaseRecord(this, id, readEntries));
     }
 
-    /**
+    /**CALCULATED_PRICE
      * Check for duplicate entries.
      * @param readEntries the entries read
      * @param id the id of the read entry
@@ -175,18 +174,6 @@ public abstract class Database {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Returns a new list with {@code added} and {@code arr} added together
-     * @param arr the base list
-     * @param added the vararg array.
-     * @return a new list of {@code added} + {@code arr}
-     */
-    private List<String> concat(List<String> arr, String... added) {
-        List<String> newList = new ArrayList<>(arr);
-        Collections.addAll(newList, added);
-        return newList;
     }
 
     /**
@@ -220,9 +207,9 @@ public abstract class Database {
 
     /**
      * Searches the database for entries
-     * @param comparator
-     * @param form
-     * @return
+     * @param comparator the comparator to compare the records.
+     * @param form the form to search with.
+     * @return the resulting stream from the found entries.
      */
     private Stream<DatabaseRecord> streamEntries(Comparator<RecordEntry> comparator, NamedRecord... form) {
         if(this.entries.isEmpty() ) {
@@ -289,7 +276,7 @@ public abstract class Database {
         //If any of the entries haven't been set then just set them to an empty string
         for (int i = 0; i < entry.length; i++) {
             if(entry[i] == null) {
-                entry[i] = new EmptyRecord();
+                entry[i] = this.schema.getEntries()[i].getEntry(null);
             }
         }
 
@@ -355,10 +342,6 @@ public abstract class Database {
         return this.fields;
     }
 
-    public RecordType[] getSchema() {
-        return schema.getEntries();
-    }
-
     /**
      * Gets the read level for this database
      * @return the minimum read level for this database
@@ -406,7 +389,6 @@ public abstract class Database {
      * @return the definition of field names to schema types for this database.
      */
     protected abstract Field[] getDefinition();
-
 
     /**
      * @return the primary fields for this database. These fields are the ones that MUST have unique values.

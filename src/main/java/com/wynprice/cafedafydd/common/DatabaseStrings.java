@@ -37,6 +37,15 @@ public class DatabaseStrings {
         public static final String OS = "os";
         public static final String SESSION_ID = "session_id";
         public static final String PRICE_PER_HOUR = "pph";
+        public static final String INSTALLED_GAMES = "installed_games";
+    }
+
+    public static class Games {
+        public static final String FILE_NAME = "games";
+
+        public static final String GAME_NAME = "game_name";
+        public static final String GAME_RATING = "game_rating";
+
     }
 
 }

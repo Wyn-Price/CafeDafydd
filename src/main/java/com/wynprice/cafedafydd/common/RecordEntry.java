@@ -32,7 +32,6 @@ public interface RecordEntry {
 
     static RecordEntry createNew(byte id) {
         switch (id) {
-            case -1: return new EmptyRecord();
             case 0: return new StringEntry();
             case 1: return new IntEntry();
             case 2: return new FloatEntry();
@@ -89,7 +88,6 @@ public interface RecordEntry {
         throw new UnsupportedOperationException("Cannot set " + this + " to an array");
     }
 
-
     byte getId();
     CharSequence getAsFileString();
     RecordEntry deserialize(ByteBuf buf);
@@ -97,6 +95,4 @@ public interface RecordEntry {
     default String getCompareString() {
         return this.getAsFileString().toString();
     }
-
-
 }

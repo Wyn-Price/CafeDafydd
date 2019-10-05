@@ -23,6 +23,7 @@ public abstract class Databases {
     public static final Database USERS = new UserDatabase();
     public static final Database SESSIONS = new SessionsDatabase();
     public static final Database COMPUTERS = new ComputersDatabase();
+    public static final Database GAMES = new GamesDatabase();
 
     private static final class UserDatabase extends Database {
 
@@ -115,7 +116,8 @@ public abstract class Databases {
             return new Field[] {
                 Field.of(Computers.OS, RecordType.STRING),
                 Field.of(Computers.SESSION_ID, RecordType.INTEGER),
-                Field.of(Computers.PRICE_PER_HOUR, RecordType.FLOAT)
+                Field.of(Computers.PRICE_PER_HOUR, RecordType.FLOAT),
+                Field.of(Computers.INSTALLED_GAMES, RecordType.ARRAY.apply(RecordType.INTEGER))
             };
         }
 
@@ -130,7 +132,33 @@ public abstract class Databases {
         }
     }
 
-    private static final Database[] DATABASES = new Database[]{ USERS, SESSIONS, COMPUTERS };
+    private static final class GamesDatabase extends Database {
+
+        @Override
+        protected String getFilename() {
+            return Games.FILE_NAME;
+        }
+
+        @Override
+        protected Field[] getDefinition() {
+            return new Field[] {
+                Field.of(Games.GAME_NAME, RecordType.STRING),
+                Field.of(Games.GAME_RATING, RecordType.STRING),
+            };
+        }
+
+        @Override
+        public PermissionLevel getReadLevel() {
+            return PermissionLevel.USER;
+        }
+
+        @Override
+        public PermissionLevel getEditLevel() {
+            return PermissionLevel.ADMINISTRATOR;
+        }
+    }
+
+    private static final Database[] DATABASES = new Database[]{ GAMES, USERS, SESSIONS, COMPUTERS };
 
     public static Optional<Database> getFromFile(String fileName) {
         for (Database database : DATABASES) {

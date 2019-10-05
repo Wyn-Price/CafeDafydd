@@ -3,6 +3,7 @@ package com.wynprice.cafedafydd.server.database;
 import com.wynprice.cafedafydd.common.RecordEntry;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 public class DatabaseDefinition {
 
@@ -20,7 +21,7 @@ public class DatabaseDefinition {
 
     public RecordEntry[] parseLine(String line) {//fileFields
         FileLineReader reader = new FileLineReader(line);
-        return Arrays.stream(this.entries).map(f -> f.getSafeEntry(reader)).toArray(RecordEntry[]::new);
+        return Arrays.stream(this.entries).map(f -> f.getEntry(reader)).toArray(RecordEntry[]::new);
     }
 
     public RecordType[] getEntries() {
