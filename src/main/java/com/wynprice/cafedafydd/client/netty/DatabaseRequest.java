@@ -5,6 +5,7 @@ import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketGetDatabas
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketHasDatabaseEntry;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
+import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.common.utils.RequestType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -67,13 +68,13 @@ public class DatabaseRequest {
         private final Map<Integer, Consumer<D>> storage = new HashMap<>();
 
         /**
-         * Send the request to the server. Delegates to {@link #sendRequest(String, Consumer, String...)},
+         * Send the request to the server. Delegates to {@link #sendRequest(String, Consumer, NamedRecord[])},
          * with {@code form} going to {@link FormBuilder#getForm()}
          *
          * @param databaseFile the database file to send to the request to
          * @param receiver the handler to use when the request is complete
          * @param form the FormBuilder to create the form from
-         * @see #sendRequest(String, Consumer, String...)
+         * @see #sendRequest(String, Consumer, NamedRecord[])
          */
         public void sendRequest(String databaseFile, Consumer<D> receiver, FormBuilder form) {
             this.sendRequest(databaseFile, receiver, form.getForm());
@@ -86,8 +87,8 @@ public class DatabaseRequest {
          * @param form the form to use
          * @see #sendRequest(String, Consumer, FormBuilder)
          */
-        public void sendRequest(String databaseFile, Consumer<D> receiver, String... form) {
-            //Up the total requests id and get the next id. Set the receiver into the storage with that id,
+        public void sendRequest(String databaseFile, Consumer<D> receiver, NamedRecord... form) {
+            //Up the total requests id and get the nextChar id. Set the receiver into the storage with that id,
             //Then then send the packet created with the PacketCreation to the server.
             int id = this.requests++;
             this.storage.put(id, receiver);
@@ -117,6 +118,6 @@ public class DatabaseRequest {
      * @param <P> The packet class of which to construct a packet.
      */
     private interface PacketCreation<P> {
-        P createPacket(int requestID, String databaseFile, String... form);
+        P createPacket(int requestID, String databaseFile, NamedRecord[] form);
     }
 }

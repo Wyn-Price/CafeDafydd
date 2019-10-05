@@ -1,12 +1,14 @@
 package com.wynprice.cafedafydd.server.database;
 
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.server.PermissionLevel;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Optional;
 
 import static com.wynprice.cafedafydd.common.DatabaseStrings.*;
+import static com.wynprice.cafedafydd.common.RecordEntry.stringRecord;
 
 /**
  * All the database implementations
@@ -31,7 +33,11 @@ public abstract class Databases {
 
         private UserDatabase() {
             //If the admin credentials don't exist, generate them. (MAYBE THROW AN ERROR OR SOMETHING?)
-            if(!this.generateIfNotPresent(Users.USERNAME, ADMIN_USERNAME, Users.PASSWORD_HASH, ADMIN_PASSWORD_HASH, Users.PERMISSION_LEVEL, PermissionLevel.ADMINISTRATOR.name(), Users.EMAIL, ADMIN_EMAIL)) {
+            if(!this.generateIfNotPresent(
+                NamedRecord.of(Users.USERNAME, stringRecord(ADMIN_USERNAME)),
+                NamedRecord.of(Users.PASSWORD_HASH, stringRecord(ADMIN_PASSWORD_HASH)),
+                NamedRecord.of(Users.PERMISSION_LEVEL, stringRecord(PermissionLevel.ADMINISTRATOR.name())),
+                NamedRecord.of(Users.EMAIL, stringRecord(ADMIN_EMAIL)))) {
                 this.writeToFile();
             }
         }
@@ -42,8 +48,13 @@ public abstract class Databases {
         }
 
         @Override
-        protected String[] getFields() {
-            return new String[] {Users.USERNAME, Users.PASSWORD_HASH, Users.PERMISSION_LEVEL, Users.EMAIL};
+        protected Field[] getDefinition() {
+            return new Field[] {
+                Field.of(Users.USERNAME, RecordType.STRING),
+                Field.of(Users.PASSWORD_HASH, RecordType.STRING),
+                Field.of(Users.PERMISSION_LEVEL, RecordType.STRING),
+                Field.of(Users.EMAIL, RecordType.STRING)
+            };
         }
 
         @Override
@@ -53,7 +64,7 @@ public abstract class Databases {
 
         @Override
         public boolean canEdit(DatabaseRecord record, int userID, PermissionLevel level) {
-            return PermissionLevel.valueOf(record.getField(Users.PERMISSION_LEVEL)).getPermIndex() < level.getPermIndex() || level == PermissionLevel.ADMINISTRATOR;
+            return PermissionLevel.valueOf(record.getField(Users.PERMISSION_LEVEL).getAsString()).getPermIndex() < level.getPermIndex() || level == PermissionLevel.ADMINISTRATOR;
         }
     }
 
@@ -65,8 +76,15 @@ public abstract class Databases {
         }
 
         @Override
-        protected String[] getFields() {
-            return new String[]{ Sessions.USER_ID, Sessions.COMPUTER_ID, Sessions.ISO8601_START, Sessions.ISO8601_END, Sessions.CALCULATED_PRICE, Sessions.PAID };
+        protected Field[] getDefinition() {
+            return new Field[] {
+                Field.of(Sessions.USER_ID, RecordType.INTEGER),
+                Field.of(Sessions.COMPUTER_ID, RecordType.INTEGER),
+                Field.of(Sessions.ISO8601_START, RecordType.DATE),
+                Field.of(Sessions.ISO8601_END, RecordType.DATE),
+                Field.of(Sessions.CALCULATED_PRICE, RecordType.FLOAT),
+                Field.of(Sessions.PAID, RecordType.BOOLEAN),
+            };
         }
 
         @Override
@@ -81,7 +99,7 @@ public abstract class Databases {
 
         @Override
         public boolean canRead(DatabaseRecord record, int userID, PermissionLevel level) {
-            return record.getField(Sessions.USER_ID).equals(String.valueOf(userID)) || level.getPermIndex() >= PermissionLevel.STAFF_MEMBER.getPermIndex();
+            return record.getField(Sessions.USER_ID).getAsInt() == userID || level.getPermIndex() >= PermissionLevel.STAFF_MEMBER.getPermIndex();
         }
     }
 
@@ -93,8 +111,12 @@ public abstract class Databases {
         }
 
         @Override
-        protected String[] getFields() {
-            return new String[]{ Computers.OS, Computers.SESSION_ID, Computers.PRICE_PER_HOUR };
+        protected Field[] getDefinition() {
+            return new Field[] {
+                Field.of(Computers.OS, RecordType.STRING),
+                Field.of(Computers.SESSION_ID, RecordType.INTEGER),
+                Field.of(Computers.PRICE_PER_HOUR, RecordType.FLOAT)
+            };
         }
 
         @Override

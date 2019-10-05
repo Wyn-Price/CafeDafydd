@@ -1,12 +1,17 @@
 package com.wynprice.cafedafydd.server.database;
 
 import com.wynprice.cafedafydd.common.DatabaseStrings;
+import com.wynprice.cafedafydd.common.RecordEntry;
+import com.wynprice.cafedafydd.common.utils.ArrayUtils;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.common.utils.UtilCollectors;
 import com.wynprice.cafedafydd.server.PermissionLevel;
+import com.wynprice.cafedafydd.common.entries.EmptyRecord;
+import com.wynprice.cafedafydd.common.entries.InlineEntry;
+import com.wynprice.cafedafydd.common.entries.NotEntry;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
@@ -14,7 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -24,6 +29,8 @@ import java.util.stream.Stream;
 public abstract class Database {
 
     private static final String ID = "id";
+
+    private final DatabaseDefinition schema;
 
     /**
      * This is the list of fields in the database, and is the first line of the csv file
@@ -47,7 +54,10 @@ public abstract class Database {
 
     Database() {
         //Set and check the fields and path
-        this.fields = Arrays.asList(this.getFields());
+        Field[] pairs = this.getDefinition();
+        this.fields = Arrays.stream(pairs).map(Field::getFieldName).collect(Collectors.toList());
+        this.schema = DatabaseDefinition.of(Arrays.stream(pairs).map(Field::getEntry).toArray(RecordType[]::new));
+
         if(this.fields.isEmpty()) {
             throw new IllegalArgumentException("Need to specify the at least one field");
         }
@@ -58,7 +68,7 @@ public abstract class Database {
         if(Files.exists(this.path)) {
             try {
                 List<String> lines = Files.readAllLines(this.path);
-                List<String> fileFields = this.concat(new ArrayList<>(), lines.remove(0).split(","));
+                List<String> fileFields = ArrayUtils.asList(lines.remove(0).split(","));
                 for (String line : lines) {
                     this.parseLine(line, fileFields);
                 }
@@ -81,7 +91,7 @@ public abstract class Database {
     private void reindexAll() {
         //TODO: maybe don't use this ever, and instead insert when the file is being loaded.
         for (String field : this.fields) {
-            this.indexedRecords.put(field, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> r.getField(field))));
+            this.indexedRecords.put(field, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> r.getField(field).getCompareString())));
         }
         this.indexedRecords.put(DatabaseStrings.ID, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> String.valueOf(r.getPrimaryField()))));
     }
@@ -111,7 +121,7 @@ public abstract class Database {
         //Remove the record from the indexed records and insert it
         List<DatabaseRecord> list = this.indexedRecords.get(field);
         list.remove(record);
-        Algorithms.insert(list, record, Comparator.comparing(r -> r.getField(field)));
+        Algorithms.insert(list, record, Comparator.comparing(r -> r.getField(field).getCompareString()));
     }
 
     /**
@@ -120,52 +130,18 @@ public abstract class Database {
      * @param fileFields the fields to parse to.
      */
     private void parseLine(String line, List<String> fileFields) {
-        //TODO:
-        // move to character analysis rather than splitting.
-        // Possible use -> r/,(?=(?:[^[]*\[[^]]*\])*[^]]*$)/ for splitting,
-        // to allow for a,[aa,bb,cc],c -> to be only 3 records, with the second record as an array
-
-        //Get a list of fields with ID on the end, and get the line split by comma
-        List<String> idFields = this.concat(this.fields, ID);
-        List<String> arr = this.concat(new ArrayList<>(), line.split(","));
-
         //The entries that have been read
-        String[] readEntries = new String[this.fields.size()];
+        RecordEntry[] rawEntries = this.schema.parseLine(line);
+        RecordEntry[] readEntries = new RecordEntry[rawEntries.length - 1];
 
-        //Go through the list of values separated by a comma on this line. If that amount of
-        //values is larger than the fileFields, then there is too many fields on the entry.
-        for (int i = 0; i < arr.size(); i++) {
-            if(i >= fileFields.size()) {
-                log.error("Too many fields on entry {}. Expected {}, got {}", line, fileFields.size(), arr.size());
-                return;
-            }
-
-            //Get the field and value. If the fields+ids don't contain the specified field, log an error and return
-            String field = fileFields.get(i);
-            String value = arr.get(i);
-            if(idFields.contains(field)) {
-
-                //If the field is not the ID field, get the index of the field on the idFields and set that to the read array.
-                if(!field.equals(ID)) {
-                    readEntries[idFields.indexOf(field)] = value;
-                }
-            } else {
-                log.error("Field in {} contains field {} with value {} which doesn't exist in this database fields: {}", this.path, field, value, idFields);
-                return;
-            }
-        }
-
-        //Go through the read array and check that all the fields have been set.
-        //TODO: have the databases be able to set non primary fields in databases when values are missing.
-        for (int i = 0; i < readEntries.length; i++) {
-            if(readEntries[i] == null) {
-                log.error("CVS file {} does not contain field {}", this.path, idFields.get(i));
-                return;
+        for (String field : fileFields) {
+            if(!ID.equals(field)) {
+                readEntries[this.fields.indexOf(field)] = rawEntries[fileFields.indexOf(field)];
             }
         }
 
         //Get the index of the parsed line, check for duplicate entries, and if none are found add a new record to the entries list
-        int id = Integer.parseInt(arr.get(fileFields.indexOf(ID)));
+        int id = rawEntries[fileFields.indexOf(ID)].getAsInt();
         if(this.checkDuplicates(readEntries, id)) {
             return;
         }
@@ -178,14 +154,14 @@ public abstract class Database {
      * @param id the id of the read entry
      * @return true if there are duplicates found, false otherwise.
      */
-    private boolean checkDuplicates(String[] readEntries, int id) {
+    private boolean checkDuplicates(RecordEntry[] readEntries, int id) {
         //Check duplicates using the primary fields.
         for (String field : this.getPrimaryFields()) {
             int index = this.fields.indexOf(field);
 
             //Search for any entry that has been set with the same value in the same field as the parsed entry.
             //This means that there are conflicting primary fields.
-            Optional<String[]> foundMatched = this.entries.stream().map(DatabaseRecord::getEntries).filter(a -> a[index].equals(readEntries[index])).findAny();
+            Optional<RecordEntry[]> foundMatched = this.entries.stream().map(DatabaseRecord::getEntries).filter(a -> a[index].equals(readEntries[index])).findAny();
             if(foundMatched.isPresent()) {
                 log.error("Found multiple entries with the same primary field {}: '{}' in file {}. Aborting found entry. Existing entry :{}, found entry {}", field, readEntries[index], this.path, Arrays.toString(foundMatched.get()), Arrays.toString(readEntries));
                 return true;
@@ -228,8 +204,8 @@ public abstract class Database {
      * @return the stream of found entries.
      * @see com.wynprice.cafedafydd.common.utils.FormBuilder
      */
-    public Stream<DatabaseRecord> searchEntries(String... form) {
-        return this.streamEntries((o1, o2) -> o2.contains(o1) ? 0 : o1.compareTo(o2), form);
+    public Stream<DatabaseRecord> searchEntries(NamedRecord... form) {
+        return this.streamEntries((o1, o2) -> o2.getCompareString().startsWith(o1.getCompareString()) ? 0 : o1.getCompareString().compareTo(o2.getCompareString()), form);
     }
 
     /**
@@ -238,8 +214,8 @@ public abstract class Database {
      * @return the stream of found entries.
      * @see com.wynprice.cafedafydd.common.utils.FormBuilder
      */
-    public Stream<DatabaseRecord> getEntries(String... form) {
-        return this.streamEntries(String::compareTo, form);
+    public Stream<DatabaseRecord> getEntries(NamedRecord... form) {
+        return this.streamEntries(Comparator.comparing(RecordEntry::getCompareString), form);
     }
 
     /**
@@ -248,69 +224,48 @@ public abstract class Database {
      * @param form
      * @return
      */
-    private Stream<DatabaseRecord> streamEntries(Comparator<String> comparator, String... form) {
+    private Stream<DatabaseRecord> streamEntries(Comparator<RecordEntry> comparator, NamedRecord... form) {
         if(this.entries.isEmpty() ) {
             return Stream.empty();
         }
         if(form.length == 0) {
             return this.entries.stream();
         }
-        Iterator<String> iterator = Arrays.stream(form).iterator();
         List<DatabaseRecord> list = new ArrayList<>(this.entries);
-        while (iterator.hasNext()) {
-            //If the form object equals NOT_PREFIX, then invert the search and move the index along to the next position.
+        for(NamedRecord record : form) {
+            //If the form object equals NOT_PREFIX, then invert the search and move the index along to the nextChar position.
             boolean inverted = false;
 
-            String field = iterator.next();
-            if(field.equals(DatabaseStrings.NOT_PREFIX)) {
-                field = iterator.next();
+            String field = record.getField();
+            RecordEntry formValue = record.getRecord();
+
+            if(formValue instanceof NotEntry) {
                 inverted = true;
+                formValue = ((NotEntry)formValue).getEntry();
             }
             //Damn you lambda statements
-            String finalField = field;
             boolean finalInverted = inverted;
 
-            String formValue = iterator.next();
-
-            if(formValue.equals(DatabaseStrings.INLINE_REQUEST_PREFIX)) {
-                Optional<String> inlineFormValue = this.getInlineFormValue(comparator, iterator);
-                if(inlineFormValue.isPresent()) {
-                    formValue = inlineFormValue.get();
+            if(formValue instanceof InlineEntry) {
+                InlineEntry value = (InlineEntry) formValue;
+                Optional<RecordEntry> optional = Databases.getFromFile(value.getRequestDatabase())
+                    .flatMap(d -> d.streamEntries(comparator, value.getForm()).collect(UtilCollectors.toSingleEntry()))
+                    .map(r -> r.getField(value.getRequestDatabaseField()));
+                if(optional.isPresent()) {
+                    formValue = optional.get();
                 } else {
                     return Stream.empty();
                 }
             }
 
+
             //Get the found entries for this section of the form, and then go through the current list
             //and if the form entry is inverted, removed them if the found entries contains the entry, otherwise
             //remove the element if the found entries doesn't contain it.
-            List<DatabaseRecord> foundRecords = Algorithms.splicedBinarySearch(this.indexedRecords.get(finalField), r -> r.getField(finalField), formValue, comparator);
+            List<DatabaseRecord> foundRecords = Algorithms.splicedBinarySearch(this.indexedRecords.get(field), r -> r.getField(field), formValue, comparator);
             list.removeIf(r -> finalInverted == foundRecords.contains(r));
         }
         return list.stream();
-    }
-
-    private Optional<String> getInlineFormValue(Comparator<String> comparator, Iterator<String> iterator) {
-        Optional<Database> file = Databases.getFromFile(iterator.next());
-        String field = iterator.next();
-        String fieldSizeLength = iterator.next();
-
-        int length;
-        try {
-            length = Integer.parseInt(fieldSizeLength);
-        } catch (NumberFormatException e) {
-            log.error("Tried to skip inline request with length: " + fieldSizeLength + " but that is not a number.");
-            return Optional.empty();
-        }
-
-        if(file.isPresent()) {
-            String[] form = IntStream.range(0, length).mapToObj(i -> iterator.next()).toArray(String[]::new);
-            return file.flatMap(d -> d.streamEntries(comparator, form).collect(UtilCollectors.toSingleEntry())).map(r -> r.getField(field));
-        }
-        for (int i = 0; i < length; i++) {
-            iterator.next();
-        }
-        return Optional.empty();
     }
 
     /**
@@ -319,27 +274,22 @@ public abstract class Database {
      * @return the generated record.
      * @see com.wynprice.cafedafydd.common.utils.FormBuilder
      */
-    public DatabaseRecord generateAndAddDatabase(String... form) {
-        //Check for mismatched inputs
-        if(form.length % 2 != 0) {
-            throw new IllegalArgumentException("Mismatched input in database generation " + this.path.getName(-1) + ". Fields: " + this.fields.toString() + ", input arguments" + Arrays.toString(form)
-                + ". Input data should be in the format: `<KEY1>, <VALUE1>, <KEY2>, <VALUE2>...`");
-        }
+    public DatabaseRecord generateAndAddDatabase(NamedRecord... form) {
         //Create the new backing array and get the current maximum id + 1. TODO: maybe get the lowest available id, instead of the max + 1
-        String[] entry = new String[this.fields.size()];
+        RecordEntry[] entry = new RecordEntry[this.fields.size()];
         int newId = this.entries.stream().map(DatabaseRecord::getPrimaryField).mapToInt(i -> i).max().orElse(0) + 1;
 
         //Go through all the form entries and set the fields in the entry to be the field value.
         //The indexOf stuff is to ensure that it all gets put in the right place, as the input form
-        //Doesn't necessarily have to be in the same order as the actual fields.
-        for (int i = 0; i < form.length; i+=2) {
-            entry[this.fields.indexOf(form[i])] = form[i + 1];
+        //doesn't necessarily have to be in the same order as the actual fields.
+        for (NamedRecord record : form) {
+            entry[this.fields.indexOf(record.getField())] = record.getRecord();
         }
 
         //If any of the entries haven't been set then just set them to an empty string
         for (int i = 0; i < entry.length; i++) {
             if(entry[i] == null) {
-                entry[i] = "";
+                entry[i] = new EmptyRecord();
             }
         }
 
@@ -357,7 +307,7 @@ public abstract class Database {
      * @param form the form to search for
      * @return true if there is at least one entry that matches the form, false otherwise
      */
-    public boolean hasAllEntries(String... form) {
+    public boolean hasAllEntries(NamedRecord... form) {
         return this.getEntries(form).count() > 0;
     }
 
@@ -366,7 +316,7 @@ public abstract class Database {
      * @param form the form to check/generate
      * @return true of a form was generated, false otherwise
      */
-    public boolean generateIfNotPresent(String... form) {
+    public boolean generateIfNotPresent(NamedRecord... form) {
         if(!this.hasAllEntries(form)) {
             this.generateAndAddDatabase(form);
             return true;
@@ -403,6 +353,10 @@ public abstract class Database {
 
     public List<String> getFieldList() {
         return this.fields;
+    }
+
+    public RecordType[] getSchema() {
+        return schema.getEntries();
     }
 
     /**
@@ -449,9 +403,10 @@ public abstract class Database {
     protected abstract String getFilename();
 
     /**
-     * @return all the fields for this database
+     * @return the definition of field names to schema types for this database.
      */
-    protected abstract String[] getFields();
+    protected abstract Field[] getDefinition();
+
 
     /**
      * @return the primary fields for this database. These fields are the ones that MUST have unique values.
@@ -459,5 +414,11 @@ public abstract class Database {
      */
     public String[] getPrimaryFields() {
         return new String[0];
+    }
+
+    @Data(staticConstructor = "of")
+    public static class Field {
+        private final String fieldName;
+        private final RecordType entry;
     }
 }

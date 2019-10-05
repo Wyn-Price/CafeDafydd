@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
 
 import static com.wynprice.cafedafydd.common.DatabaseStrings.ID;
 import static com.wynprice.cafedafydd.common.DatabaseStrings.Users;
+import static com.wynprice.cafedafydd.common.RecordEntry.intRecord;
+import static com.wynprice.cafedafydd.common.RecordEntry.stringRecord;
 
 @Log4j2
 public class EditUserPage implements BaseController {
@@ -57,7 +59,7 @@ public class EditUserPage implements BaseController {
                     } else {
                         this.errorField.setText("");
                     }
-                }), FormBuilder.create().with(Users.USERNAME, newValue).without(ID, String.valueOf(this.id)));
+                }), FormBuilder.create().with(Users.USERNAME, stringRecord(newValue)).without(ID, intRecord(this.id)));
             }
         });
 
@@ -74,7 +76,7 @@ public class EditUserPage implements BaseController {
                     } else {
                         this.errorField.setText("");
                     }
-                }), FormBuilder.create().with(Users.EMAIL, newValue).without(ID, String.valueOf(this.id)));
+                }), FormBuilder.create().with(Users.EMAIL, stringRecord(newValue)).without(ID, intRecord(this.id)));
             }
         });
 
@@ -113,9 +115,9 @@ public class EditUserPage implements BaseController {
                 throw new IllegalArgumentException("Returned Record Shouldn't be empty. Couldn't find user with id " + this.id);
             }
             DatabaseRecord record = records.get(0);
-            this.usernameField.setText(record.getField(Users.USERNAME));
-            this.emailField.setText(record.getField(Users.EMAIL));
-        }, ID, String.valueOf(this.id));
+            this.usernameField.setText(record.getField(Users.USERNAME).getAsString());
+            this.emailField.setText(record.getField(Users.EMAIL).getAsString());
+        }, FormBuilder.create().with(ID, intRecord(this.id)));
     }
 
     @FXML

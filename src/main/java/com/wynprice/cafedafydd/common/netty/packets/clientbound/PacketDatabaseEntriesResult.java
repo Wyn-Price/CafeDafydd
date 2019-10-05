@@ -3,6 +3,7 @@ package com.wynprice.cafedafydd.common.netty.packets.clientbound;
 import com.wynprice.cafedafydd.common.utils.ByteBufUtils;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.RequestType;
+import com.wynprice.cafedafydd.common.RecordEntry;
 import io.netty.buffer.ByteBuf;
 import lombok.Value;
 
@@ -29,8 +30,9 @@ public class PacketDatabaseEntriesResult {
         buf.writeShort(packet.records.size());
         for (DatabaseRecord record : packet.records) {
             buf.writeInt(record.getPrimaryField());
-            for (String entry : record.getEntries()) {
-                ByteBufUtils.writeString(entry, buf);
+            for (RecordEntry entry : record.getEntries()) {
+                buf.writeByte(entry.getId());
+                entry.serialize(buf);
             }
         }
     }
@@ -47,8 +49,10 @@ public class PacketDatabaseEntriesResult {
             .mapToObj($ ->
                 new DatabaseRecord(fields, buf.readInt(),
                     IntStream.range(0, fields.size())
-                        .mapToObj($$ -> ByteBufUtils.readString(buf))
-                        .toArray(String[]::new))).collect(Collectors.toList());
+                        .mapToObj($$ -> RecordEntry.createNew(buf.readByte()).deserialize(buf))
+                        .toArray(RecordEntry[]::new)
+                )
+            ).collect(Collectors.toList());
         return new PacketDatabaseEntriesResult(type, requestId, fields, records);
 
     }

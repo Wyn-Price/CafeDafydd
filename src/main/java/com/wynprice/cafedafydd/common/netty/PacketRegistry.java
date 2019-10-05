@@ -14,7 +14,6 @@ import java.util.function.*;
  * information about how packets are encoded and decoded.
  * @see PacketEntry
  */
-//todo: remove enum instance and just go to static stuff?
 public class PacketRegistry {
 
     /**

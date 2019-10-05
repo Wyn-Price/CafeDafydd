@@ -8,16 +8,17 @@ import com.wynprice.cafedafydd.common.netty.packets.clientbound.*;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.*;
 import com.wynprice.cafedafydd.server.database.Database;
 import com.wynprice.cafedafydd.server.database.Databases;
+import com.wynprice.cafedafydd.common.entries.IntEntry;
 import com.wynprice.cafedafydd.server.utils.PermissionException;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.wynprice.cafedafydd.common.DatabaseStrings.Users;
+import static com.wynprice.cafedafydd.common.RecordEntry.*;
 
 @Log4j2
 public class ServerNetworkHandler extends NetworkHandler {
@@ -40,13 +41,13 @@ public class ServerNetworkHandler extends NetworkHandler {
 
     @NetworkHandle
     public void handleLogin(PacketLogin login) {
-        Optional<DatabaseRecord> entry = Databases.USERS.getEntries(Users.USERNAME, login.getUsername(), Users.PASSWORD_HASH, login.getPasswordHash()).collect(UtilCollectors.toSingleEntry());
+        Optional<DatabaseRecord> entry = Databases.USERS.getEntries(NamedRecord.of(Users.USERNAME, stringRecord(login.getUsername())), NamedRecord.of(Users.PASSWORD_HASH, stringRecord(login.getPasswordHash()))).collect(UtilCollectors.toSingleEntry());
         if(!entry.isPresent()) {
             this.sendPacket(new PacketDisplayError("Invalid Credentials", "Username or Password is incorrect.\nPlease contact a member of staff to change your password"));
             return;
         }
         this.userID = entry.get().getPrimaryField();
-        this.permission = PermissionLevel.valueOf(entry.get().getField(Users.PERMISSION_LEVEL));
+        this.permission = PermissionLevel.valueOf(entry.get().getField(Users.PERMISSION_LEVEL).getAsString());
 
         switch (this.permission) {
             case USER:
@@ -59,7 +60,7 @@ public class ServerNetworkHandler extends NetworkHandler {
                 this.sendPacket(new PacketDisplayScreen(Page.ADMINISTRATOR_PAGE));
                 break;
         }
-        this.sendPacket(new PacketConfirmLogin(entry.get().getField(Users.USERNAME)));
+        this.sendPacket(new PacketConfirmLogin(entry.get().getField(Users.USERNAME).getAsString()));
     }
 
     @NetworkHandle
@@ -83,15 +84,15 @@ public class ServerNetworkHandler extends NetworkHandler {
     @NetworkHandle
     public void handleCreateUser(PacketCreateUser packet) {
         this.ensurePerms(PermissionLevel.STAFF_MEMBER, "Create User");
-        if (Databases.USERS.hasAllEntries(Users.USERNAME, packet.getUsername()) || Databases.USERS.hasAllEntries(Users.EMAIL, packet.getEmail())) {
+        if (Databases.USERS.hasAllEntries(NamedRecord.of(Users.USERNAME, stringRecord(packet.getUsername()))) || Databases.USERS.hasAllEntries(NamedRecord.of(Users.EMAIL, stringRecord(packet.getEmail())))) {
             this.sendPacket(new PacketDisplayError("Creation Error", "Username or email already exists in database."));
             return;
         }
         Databases.USERS.generateAndAddDatabase(
-            Users.USERNAME, packet.getUsername(),
-            Users.EMAIL, packet.getEmail(),
-            Users.PASSWORD_HASH, packet.getPasswordHash(),
-            Users.PERMISSION_LEVEL, PermissionLevel.values()[packet.getPermissionCreatorLevel()].name());
+            NamedRecord.of(Users.USERNAME, stringRecord(packet.getUsername())),
+            NamedRecord.of(Users.EMAIL, stringRecord(packet.getEmail())),
+            NamedRecord.of(Users.PASSWORD_HASH, stringRecord(packet.getPasswordHash())),
+            NamedRecord.of(Users.PERMISSION_LEVEL, stringRecord(PermissionLevel.values()[packet.getPermissionCreatorLevel()].name())));
     }
 
     @NetworkHandle
@@ -101,11 +102,11 @@ public class ServerNetworkHandler extends NetworkHandler {
             this.sendPacket(new PacketDisplayError("Invalid Entry-point", "Need to log in before you can change password"));
             return;
         }
-        if(!entry.get().getField(Users.PASSWORD_HASH).equals(packet.getCurrentPasswordHash())) {
+        if(!entry.get().getField(Users.PASSWORD_HASH).getAsString().equals(packet.getCurrentPasswordHash())) {
             this.sendPacket(new PacketDisplayError("Invalid Password", "Current password is incorrect.\nIf you have forgotten your password speak to a member of staff."));
             return;
         }
-        entry.get().setField(Users.PASSWORD_HASH, packet.getNewPasswordHash());
+        entry.get().setField(Users.PASSWORD_HASH, stringRecord(packet.getNewPasswordHash()));
         this.sendPacket(new PacketDisplayScreen(Page.USER_PAGE));
 
     }
@@ -131,12 +132,12 @@ public class ServerNetworkHandler extends NetworkHandler {
         Optional<DatabaseRecord> entry = Databases.COMPUTERS.getEntryFromId(packet.getComputerID());
         if (entry.isPresent()) {
             DatabaseRecord record = Databases.SESSIONS.generateAndAddDatabase(
-                DatabaseStrings.Sessions.USER_ID, String.valueOf(this.userID),
-                DatabaseStrings.Sessions.COMPUTER_ID, String.valueOf(packet.getComputerID()),
-                DatabaseStrings.Sessions.ISO8601_START, DateUtils.toISO8691(DateUtils.getCurrentDate()),
-                DatabaseStrings.Sessions.ISO8601_END, DatabaseStrings.Sessions.HASNT_ENDED
+                NamedRecord.of(DatabaseStrings.Sessions.USER_ID, intRecord(this.userID)),
+                NamedRecord.of(DatabaseStrings.Sessions.COMPUTER_ID, intRecord(packet.getComputerID())),
+                NamedRecord.of(DatabaseStrings.Sessions.ISO8601_START, dateRecord(DateUtils.getCurrentDate())),
+                NamedRecord.of(DatabaseStrings.Sessions.ISO8601_END, dateRecord(DatabaseStrings.Sessions.HASNT_ENDED))
             );
-            entry.get().setField(DatabaseStrings.Computers.SESSION_ID, String.valueOf(record.getPrimaryField()));
+            entry.get().setField(DatabaseStrings.Computers.SESSION_ID, intRecord(record.getPrimaryField()));
         } else {
             this.sendPacket(new PacketDisplayError("Invalid Computer ID", "Invalid Computer ID " + packet.getComputerID()));
         }
@@ -146,7 +147,7 @@ public class ServerNetworkHandler extends NetworkHandler {
     @NetworkHandle
     public void handleCanStartSession(PacketCanStartSession packet) {
         //Find if there are any computers with no sessions, if there are, set the client to create session page, otherwise display an error
-        if(Databases.COMPUTERS.getEntries(DatabaseStrings.Computers.SESSION_ID, "-1").count() > 0) {
+        if(Databases.COMPUTERS.getEntries(NamedRecord.of(DatabaseStrings.Computers.SESSION_ID, intRecord(-1))).count() > 0) {
             this.sendPacket(new PacketDisplayScreen(Page.CREATE_SESSION));
         } else {
             this.sendPacket(new PacketDisplayError("Unable to start session", "There are no computers available :("));
@@ -159,20 +160,20 @@ public class ServerNetworkHandler extends NetworkHandler {
         if(entry.isPresent()) {
             DatabaseRecord record = entry.get();
             Date date = DateUtils.getCurrentDate();
-            Date startDate = DateUtils.fromISO8691(record.getField(DatabaseStrings.Sessions.ISO8601_START), true);
+            Date startDate = record.getField(DatabaseStrings.Sessions.ISO8601_START).getAsDate();
 
             //Calculate the price based on the hours spent on the session, and the price per hour.
             //Maybe log an error if there is not computer found? It *shouldn't* happen
-            double price = Databases.COMPUTERS.getEntryFromId(Integer.parseInt(record.getField(DatabaseStrings.Sessions.COMPUTER_ID))).map(r -> {
-                r.setField(DatabaseStrings.Computers.SESSION_ID, "-1");
+            double price = Databases.COMPUTERS.getEntryFromId(record.getField(DatabaseStrings.Sessions.COMPUTER_ID).getAsInt()).map(r -> {
+                r.setField(DatabaseStrings.Computers.SESSION_ID, intRecord(-1));
                 //3.6e+6 -> How many milliseconds in an hour
-                return Double.parseDouble(r.getField(DatabaseStrings.Computers.PRICE_PER_HOUR)) * (date.getTime() - startDate.getTime()) / 3.6e+6D;
+                return r.getField(DatabaseStrings.Computers.PRICE_PER_HOUR).getAsFloat() * (date.getTime() - startDate.getTime()) / 3.6e+6D;
             }).orElse(-1D);
 
-            record.setField(DatabaseStrings.Sessions.ISO8601_END, DateUtils.toISO8691(date));
+            record.setField(DatabaseStrings.Sessions.ISO8601_END, dateRecord(date));
             //the * 100 and / 100 is to get it to 2 decimal places
-            record.setField(DatabaseStrings.Sessions.CALCULATED_PRICE, String.valueOf(Math.round(price * 100D) / 100D));
-            record.setField(DatabaseStrings.Sessions.PAID, "0");
+            record.setField(DatabaseStrings.Sessions.CALCULATED_PRICE, floatRecord(Math.round(price * 100F) / 100F));
+            record.setField(DatabaseStrings.Sessions.PAID, boolRecord(false));
 
             this.sendPacket(new PacketCauseResync());
         } else {
@@ -193,17 +194,17 @@ public class ServerNetworkHandler extends NetworkHandler {
                     this.sendPacket(new PacketDisplayError("Unable Editing Database", "Cannot edit that record. Database prevented editing of it with permission " + this.permission));
                     return;
                 }
-                String[] form = this.replaceFormUserId(packet.getForm());
-                for (int i = 0; i < form.length; i+=2) {
-                    boolean primary = Arrays.asList(db.getPrimaryFields()).contains(form[i]);
+                NamedRecord[] form = this.replaceFormUserId(packet.getForm());
+                for (NamedRecord namedRecord : form) {
+                    boolean primary = ArrayUtils.asList(db.getPrimaryFields()).contains(namedRecord.getField());
                     if(primary) {
-                        Optional<DatabaseRecord> any = db.getEntries(form[i], form[i + 1]).filter(d -> d != dr).findAny();
+                        Optional<DatabaseRecord> any = db.getEntries(namedRecord).filter(d -> d != dr).findAny();
                         if(any.isPresent()) {
-                            this.sendPacket(new PacketDisplayError("Unable Editing Database", "Field '" + form[i] + "' is a primary field, but the set entry '" + form[i + 1] + "'\nalready exists in record " + any.get()));
+                            this.sendPacket(new PacketDisplayError("Unable Editing Database", "Field '" + namedRecord.getField() + "' is a primary field, but the set entry '" + namedRecord.getRecord() + "'\nalready exists in record " + any.get()));
                             return;
                         }
                     }
-                    dr.setField(form[i], form[i+1]);
+                    dr.setField(namedRecord.getField(), namedRecord.getRecord());
                 }
                 this.sendPacket(new PacketCauseResync());
             } else {
@@ -214,8 +215,10 @@ public class ServerNetworkHandler extends NetworkHandler {
         }
     }
 
-    private String[] replaceFormUserId(String... form) {
-        return Arrays.stream(form).map(s -> s.replaceAll("\\Q$$userid\\E", String.valueOf(this.userID))).toArray(String[]::new);
+    private NamedRecord[] replaceFormUserId(NamedRecord... form) {
+        return Arrays.stream(form)
+            .map(f -> (f.getRecord() instanceof IntEntry && f.getRecord().getAsInt() == FormBuilder.USER_ID_REFERENCE ? NamedRecord.of(f.getField(), intRecord(this.userID)) : f))
+            .toArray(NamedRecord[]::new);
     }
 
     private void ensurePerms(PermissionLevel atLeast, String operation) {

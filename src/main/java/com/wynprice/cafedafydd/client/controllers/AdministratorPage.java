@@ -34,7 +34,7 @@ public class AdministratorPage implements BaseController {
 
     @FXML
     public void onAddAdministrator() {
-        this.displayEditUser("Add Staff Member", (byte) 2);
+        this.displayEditUser("Add Administrator Member", (byte) 2);
     }
 
     private void displayEditUser(String title, byte permissionLevel) {

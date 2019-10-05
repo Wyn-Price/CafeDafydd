@@ -4,6 +4,7 @@ import lombok.Getter;
 
 /**
  * An enum class containing all the pages that are used.
+ * //TODO: make a field edit page for administrators that they can directly edit fields of a database if things go wrong.
  */
 public enum Page {
     LOGIN_PAGE("login_page"),

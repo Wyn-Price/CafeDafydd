@@ -23,8 +23,8 @@ public class CreateSessionPage implements BaseController {
         this.systemsComboBox.getItems().clear();
         DatabaseRequest.GET_ENTRIES.sendRequest(DatabaseStrings.Computers.FILE_NAME, records -> {
             for (DatabaseRecord record : records) {
-                if(record.getField(DatabaseStrings.Computers.SESSION_ID).equals("-1")) {
-                    this.systemsComboBox.getItems().add(new Computers(record.getPrimaryField(), "Type: " + record.getField(DatabaseStrings.Computers.OS)));
+                if(record.getField(DatabaseStrings.Computers.SESSION_ID).getAsInt() == -1) {
+                    this.systemsComboBox.getItems().add(new Computers(record.getPrimaryField(), "Type: " + record.getField(DatabaseStrings.Computers.OS).getAsString()));
                 }
             }
         });

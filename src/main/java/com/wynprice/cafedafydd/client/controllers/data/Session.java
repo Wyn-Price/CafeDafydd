@@ -12,20 +12,20 @@ import static com.wynprice.cafedafydd.common.DatabaseStrings.Sessions;
 @Data
 public class Session {
     private final int fieldID;
-    private final String computerID;
+    private final int computerID;
     private final Date startDate;
     private final Date endDate;
-    private final String price;
+    private final float price;
     private final boolean hasPaid;
 
     public static Session fromRecord(DatabaseRecord record) {
         return new Session(
             record.getPrimaryField(),
-            record.getField(Sessions.COMPUTER_ID),
-            DateUtils.fromISO8691(record.getField(Sessions.ISO8601_START), true),
-            DateUtils.fromISO8691(record.getField(Sessions.ISO8601_END), false),
-            record.getField(Sessions.CALCULATED_PRICE),
-            "1".equals(record.getField(Sessions.PAID))
+            record.getField(Sessions.COMPUTER_ID).getAsInt(),
+            record.getField(Sessions.ISO8601_START).getAsDate(),
+            record.getField(Sessions.ISO8601_END).getAsDate(),
+            record.getField(Sessions.CALCULATED_PRICE).getAsFloat(),
+            record.getField(Sessions.PAID).getAsBoolean()
         );
     }
 

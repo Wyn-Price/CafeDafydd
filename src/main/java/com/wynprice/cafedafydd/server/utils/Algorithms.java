@@ -102,7 +102,7 @@ public class Algorithms {
     private static <E, T> int binarySearchIndex(List<E> list, Function<E, T> mapper, T object, Comparator<? super T> comparator, boolean mustExist) {
         //Don't bother searching
         if(list.isEmpty()) {
-            return -1;
+            return mustExist ? -1 : 0;
         }
 
         //Set the top and bottom bounds
@@ -131,7 +131,7 @@ public class Algorithms {
             }
         }
 
-        //While the bounds are not next to each-other get the middle of the bounds and set that as the midpoint.
+        //While the bounds are not nextChar to each-other get the middle of the bounds and set that as the midpoint.
         while(top - bottom > 1) {
             int mid = (top + bottom) / 2;
 
@@ -149,7 +149,7 @@ public class Algorithms {
             }
         }
 
-        //If the code reaches here then the element could not be found, and top and mid are next to eachother.
+        //If the code reaches here then the element could not be found, and top and mid are nextChar to eachother.
 
         //If the element must exist, and can't be guessed return -1, as it doesn't exist
         if(mustExist) {

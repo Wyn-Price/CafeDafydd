@@ -1,15 +1,18 @@
 package com.wynprice.cafedafydd.common.utils;
 
-import com.wynprice.cafedafydd.common.DatabaseStrings;
+import com.wynprice.cafedafydd.common.RecordEntry;
+import com.wynprice.cafedafydd.common.entries.InlineEntry;
+import com.wynprice.cafedafydd.common.entries.NotEntry;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Form builders are helper classes used to build the forms that are used for database requests.
  */
 public class FormBuilder {
+
+    public static final int USER_ID_REFERENCE = -109813; //A random number. Used as a placeholder for the user id
 
     private FormBuilder() { }
 
@@ -24,12 +27,7 @@ public class FormBuilder {
     /**
      * The form list. When {@link #getForm()} is called, this is compiled into an array.
      */
-    private final List<String> form = new ArrayList<>();
-
-    /**
-     * The previous amount of entries added {@link #form}. Used in {@link #when(boolean)}
-     */
-    private int prevLen = 0;
+    private final List<NamedRecord> form = new ArrayList<>();
 
     /**
      * Adds the field and value to the form
@@ -37,10 +35,8 @@ public class FormBuilder {
      * @param value the {@code field}'s value to put in the form
      * @return itself
      */
-    public FormBuilder with(String field, String value) {
-        this.form.add(field);
-        this.form.add(value);
-        this.prevLen = 2;
+    public FormBuilder with(String field, RecordEntry value) {
+        this.form.add(NamedRecord.of(field, value));
         return this;
     }
 
@@ -53,14 +49,13 @@ public class FormBuilder {
      * @param form the form to use to request in the other database.
      * @return itself
      */
-    public FormBuilder withInline(String field, String requestDatabase, String requestDatabaseField, String... form) {
-        this.form.add(field);
-        this.form.add(DatabaseStrings.INLINE_REQUEST_PREFIX);
-        this.form.add(requestDatabase);
-        this.form.add(requestDatabaseField);
-        this.form.add(String.valueOf(form.length));
-        Collections.addAll(this.form, form);
-        this.prevLen = 5 + form.length;
+    public FormBuilder withInline(String field, String requestDatabase, String requestDatabaseField, NamedRecord... form) {
+        this.form.add(NamedRecord.of(field,
+            new InlineEntry()
+                .setRequestDatabase(requestDatabase)
+                .setRequestDatabaseField(requestDatabaseField)
+                .setForm(form)
+        ));
         return this;
     }
 
@@ -70,10 +65,8 @@ public class FormBuilder {
      * @param value the value to blacklist
      * @return itself
      */
-    public FormBuilder without(String field, String value) {
-        this.form.add(DatabaseStrings.NOT_PREFIX);
-        with(field, value);
-        this.prevLen = 3;
+    public FormBuilder without(String field, RecordEntry value) {
+        this.form.add(NamedRecord.of(field, new NotEntry().setEntry(value)));
         return this;
     }
 
@@ -98,9 +91,7 @@ public class FormBuilder {
      */
     public FormBuilder when(boolean value) {
         if(!value) {
-            for (int i = 0; i < this.prevLen; i++) {
-                this.form.remove(this.form.size() - 1);
-            }
+            this.form.remove(this.form.size() - 1);
         }
         return this;
     }
@@ -117,7 +108,7 @@ public class FormBuilder {
      * Gets the form in a string array. Returns {@link #form} as {@link List#toArray(Object[])}
      * @return a string array representing this form.
      */
-    public String[] getForm() {
-        return this.form.toArray(new String[0]);
+    public NamedRecord[] getForm() {
+        return this.form.toArray(new NamedRecord[0]);
     }
 }

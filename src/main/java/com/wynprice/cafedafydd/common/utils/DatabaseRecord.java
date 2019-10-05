@@ -1,10 +1,13 @@
 package com.wynprice.cafedafydd.common.utils;
 
 import com.wynprice.cafedafydd.common.DatabaseStrings;
+import com.wynprice.cafedafydd.common.RecordEntry;
+import com.wynprice.cafedafydd.common.entries.IntEntry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -30,14 +33,14 @@ public class DatabaseRecord {
      * This is the record entries for this record. This should be in the same order as {@link #fields}
      */
     @Getter
-    private final String[] entries;
+    private final RecordEntry[] entries;
 
     /**
      * Converts this record to a string to be put in the csv file.
      * @return The csv line string.
      */
     public String toFileString() {
-        return this.primaryField + "," + String.join(",", this.entries);
+        return this.primaryField + "," + String.join(",", () -> Arrays.stream(this.entries).map(RecordEntry::getAsFileString).iterator());
     }
 
     /**
@@ -45,9 +48,9 @@ public class DatabaseRecord {
      * @param field the field to get the entry from
      * @return the value for the specified field
      */
-    public String getField(String field) {
+    public RecordEntry getField(String field) {
         if(DatabaseStrings.ID.equals(field)) {
-            return String.valueOf(this.primaryField);
+            return new IntEntry().setInt(this.primaryField);
         }
         return this.entries[this.fields.indexOf(field)];
     }
@@ -57,7 +60,7 @@ public class DatabaseRecord {
      * @param field the field to set to
      * @param value the value to set with the field
      */
-    public void setField(String field, String value) {
+    public void setField(String field, RecordEntry value) {
         this.entries[this.fields.indexOf(field)] = value;
     }
 }

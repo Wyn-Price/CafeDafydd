@@ -1,6 +1,7 @@
 package com.wynprice.cafedafydd.common.netty.packets.serverbound;
 
 import com.wynprice.cafedafydd.common.utils.ByteBufUtils;
+import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import io.netty.buffer.ByteBuf;
 import lombok.Value;
 
@@ -10,9 +11,9 @@ import java.util.stream.IntStream;
 public class PacketTryEditDatabase {
     private final String database;
     private final int recordID;
-    private final String[] form;
+    private final NamedRecord[] form;
 
-    public PacketTryEditDatabase(String database, int recordID, String... form) {
+    public PacketTryEditDatabase(String database, int recordID, NamedRecord... form) {
         this.database = database;
         this.recordID = recordID;
         this.form = form;
@@ -21,17 +22,14 @@ public class PacketTryEditDatabase {
     public static void encode(PacketTryEditDatabase packet, ByteBuf buf) {
         ByteBufUtils.writeString(packet.database, buf);
         buf.writeInt(packet.recordID);
-        buf.writeShort(packet.form.length);
-        for (String s : packet.form) {
-            ByteBufUtils.writeString(s, buf);
-        }
+        NamedRecord.write(packet.form, buf);
     }
 
     public static PacketTryEditDatabase decode(ByteBuf buf) {
         return new PacketTryEditDatabase(
             ByteBufUtils.readString(buf),
             buf.readInt(),
-            IntStream.range(0, buf.readShort()).mapToObj(i -> ByteBufUtils.readString(buf)).toArray(String[]::new)
+            NamedRecord.read(buf)
         );
     }
 }

@@ -3,7 +3,6 @@ package com.wynprice.cafedafydd.client.controllers;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.controllers.data.Session;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
-import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketTryEditDatabase;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
@@ -15,6 +14,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 
 import static com.wynprice.cafedafydd.common.DatabaseStrings.*;
+import static com.wynprice.cafedafydd.common.RecordEntry.*;
 
 public class SearchSessionsPage implements BaseController {
     @FXML public Button backButton;
@@ -30,7 +30,7 @@ public class SearchSessionsPage implements BaseController {
         this.paidStateBox.getSelectionModel().select(0);
 
         this.searchResult.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-            if(newValue.intValue() >= 0 && this.paidStateBox.getSelectionModel().getSelectedIndex() > 1) {
+            if(newValue.intValue() >= 0 && this.paidStateBox.getSelectionModel().getSelectedIndex() != 1) {
                 this.payingButton.setDisable(false);
                 this.payingButton.setText(this.searchResult.getItems().get(newValue.intValue()).isHasPaid() ? "Set unpaid" : "Set Paid");
             } else {
@@ -57,7 +57,7 @@ public class SearchSessionsPage implements BaseController {
             FormBuilder form = FormBuilder.create();
 
             if(!this.usernameText.getText().isEmpty()) {
-                form.withInline(Sessions.USER_ID, Users.FILE_NAME, ID, Users.USERNAME, this.usernameText.getText());
+                form.withInline(Sessions.USER_ID, Users.FILE_NAME, ID, FormBuilder.create().with(Users.USERNAME, stringRecord(this.usernameText.getText())).getForm());
             }
             if(this.paidStateBox.getSelectionModel().getSelectedIndex() > 0) {
                 // 0 -> null
@@ -67,13 +67,13 @@ public class SearchSessionsPage implements BaseController {
 
                 switch (this.paidStateBox.getSelectionModel().getSelectedIndex()) {
                     case 1:
-                        form.with(Sessions.ISO8601_END, Sessions.HASNT_ENDED);
+                        form.with(Sessions.ISO8601_END, dateRecord(Sessions.HASNT_ENDED));
                         break;
                     case 2:
-                        form.with(Sessions.PAID, "1");
+                        form.with(Sessions.PAID, boolRecord(true));
                         break;
                     case 3:
-                        form.with(Sessions.PAID, "0");
+                        form.with(Sessions.PAID, boolRecord(false));
                         break;
                 }
             }
@@ -97,10 +97,10 @@ public class SearchSessionsPage implements BaseController {
         if(item != null) {
             if(item.isHasPaid()) {
                 //Set unpaid
-                CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Sessions.FILE_NAME, item.getFieldID(), Sessions.PAID, "0"));
+                CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Sessions.FILE_NAME, item.getFieldID(), FormBuilder.create().with(Sessions.PAID, boolRecord(false)).getForm()));
             } else {
                 //Set paid
-                CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Sessions.FILE_NAME, item.getFieldID(), Sessions.PAID, "1"));
+                CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Sessions.FILE_NAME, item.getFieldID(), FormBuilder.create().with(Sessions.PAID, boolRecord(true)).getForm()));
             }
         }
     }

@@ -9,12 +9,14 @@ import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketCanStartSe
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketStopSession;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.DateUtils;
+import com.wynprice.cafedafydd.common.utils.FormBuilder;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 
 import static com.wynprice.cafedafydd.common.DatabaseStrings.Sessions;
+import static com.wynprice.cafedafydd.common.RecordEntry.intRecord;
 
 
 public class UserLoginPage implements BaseController {
@@ -44,7 +46,7 @@ public class UserLoginPage implements BaseController {
             for (DatabaseRecord record : records) {
                 this.sessionList.getItems().add(Session.fromRecord(record));
             }
-        }), Sessions.USER_ID, "$$userid");
+        }), FormBuilder.create().with(Sessions.USER_ID, intRecord(FormBuilder.USER_ID_REFERENCE)));
     }
 
     @FXML
