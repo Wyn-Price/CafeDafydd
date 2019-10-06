@@ -17,8 +17,9 @@ public enum Page {
     EDIT_USER_PAGE("edit_user"),
     SEARCH_USERS_PAGE("search_users"),
 
+    STAFF_PANEL("staff_panel"),
     ADMINISTRATOR_PAGE("administrator_panel"),
-    STAFF_PANEL("staff_panel");
+    DIRECT_DATABASE_EDIT("database_direct_edit_page");
 
     @Getter private final String fileName;
 

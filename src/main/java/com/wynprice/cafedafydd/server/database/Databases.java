@@ -65,7 +65,7 @@ public abstract class Databases {
 
         @Override
         public boolean canEdit(DatabaseRecord record, int userID, PermissionLevel level) {
-            return PermissionLevel.valueOf(record.getField(Users.PERMISSION_LEVEL).getAsString()).getPermIndex() < level.getPermIndex() || level == PermissionLevel.ADMINISTRATOR;
+            return PermissionLevel.getLevel(record.getField(Users.PERMISSION_LEVEL).getAsString()).getPermIndex() < level.getPermIndex() || level == PermissionLevel.ADMINISTRATOR;
         }
     }
 

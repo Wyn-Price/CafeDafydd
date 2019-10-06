@@ -1,5 +1,6 @@
 package com.wynprice.cafedafydd.server;
 
+import com.wynprice.cafedafydd.common.RecordEntry;
 import com.wynprice.cafedafydd.common.utils.*;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.Page;
@@ -9,6 +10,7 @@ import com.wynprice.cafedafydd.common.netty.packets.serverbound.*;
 import com.wynprice.cafedafydd.server.database.Database;
 import com.wynprice.cafedafydd.server.database.Databases;
 import com.wynprice.cafedafydd.common.entries.IntEntry;
+import com.wynprice.cafedafydd.server.database.FileLineReader;
 import com.wynprice.cafedafydd.server.utils.PermissionException;
 import lombok.extern.log4j.Log4j2;
 
@@ -47,7 +49,7 @@ public class ServerNetworkHandler extends NetworkHandler {
             return;
         }
         this.userID = entry.get().getPrimaryField();
-        this.permission = PermissionLevel.valueOf(entry.get().getField(Users.PERMISSION_LEVEL).getAsString());
+        this.permission = PermissionLevel.getLevel(entry.get().getField(Users.PERMISSION_LEVEL).getAsString());
 
         switch (this.permission) {
             case USER:
@@ -210,6 +212,61 @@ public class ServerNetworkHandler extends NetworkHandler {
             } else {
                 this.sendPacket(new PacketDisplayError("Unable to edit database", "Could not find record with id " + packet.getRecordID() + " for database " + packet.getDatabase()));
             }
+        } else {
+            this.sendPacket(new PacketDisplayError("Unable to edit database", "Could not find database " + packet.getDatabase()));
+        }
+    }
+
+    @NetworkHandle
+    public void handleEditDatabaseField(PacketEditDatabaseField packet) {
+        Optional<Database> database = Databases.getFromFile(packet.getDatabase());
+        if (database.isPresent()) {
+            Database db = database.get();
+            this.ensurePerms(db.getEditLevel(), "Editing Database " + packet.getDatabase());
+            Optional<DatabaseRecord> record = database.flatMap(d -> d.getEntryFromId(packet.getRecordID()));
+            if(record.isPresent()) {
+                DatabaseRecord dr = record.get();
+                if(!db.canEdit(dr, this.userID, this.permission)) {
+                    this.sendPacket(new PacketDisplayError("Unable Editing Database", "Cannot edit that record. Database prevented editing of it with permission " + this.permission));
+                    return;
+                }
+
+                int schemaIndex = db.getFieldList().indexOf(packet.getField()) + 1;
+
+                try {
+                    RecordEntry newEntry = db.getSchema().getEntries()[schemaIndex].getEntry(new FileLineReader(packet.getNewValue()));
+                    dr.setField(packet.getField(), newEntry);
+                } catch (Exception e) {
+                    this.sendPacket(new PacketDisplayError("Unable to edit database", "Error while setting field '" + packet.getField() + "' to value '" + packet.getNewValue() + "': \n" + e.getClass().getSimpleName() + ": " + e.getLocalizedMessage() ));
+                }
+
+
+                this.sendPacket(new PacketCauseResync());
+            } else {
+                this.sendPacket(new PacketDisplayError("Unable to edit database", "Could not find record with id " + packet.getRecordID() + " for database " + packet.getDatabase()));
+            }
+        } else {
+            this.sendPacket(new PacketDisplayError("Unable to edit database", "Could not find database " + packet.getDatabase()));
+        }
+    }
+
+    @NetworkHandle
+    public void editRecordDirect(PacketEditRecordDirect packet) {
+        Optional<Database> database = Databases.getFromFile(packet.getDatabase());
+        if (database.isPresent()) {
+            Database db = database.get();
+            this.ensurePerms(db.getEditLevel(), "Editing Database " + packet.getDatabase());
+            if(packet.getRecordID() >= 0) {
+                Optional<DatabaseRecord> record = db.getEntryFromId(packet.getRecordID());
+                if(record.isPresent()) {
+                    db.removeEntry(record.get());
+                } else {
+                    this.sendPacket(new PacketDisplayError("Unable to remove database record", "Could not find record with id " + packet.getRecordID() + " for database " + packet.getDatabase()));
+                }
+            } else {
+                db.generateAndAddDatabase();
+            }
+            this.sendPacket(new PacketCauseResync());
         } else {
             this.sendPacket(new PacketDisplayError("Unable to edit database", "Could not find database " + packet.getDatabase()));
         }

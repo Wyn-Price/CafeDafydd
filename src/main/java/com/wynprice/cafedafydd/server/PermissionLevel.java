@@ -18,4 +18,13 @@ public enum PermissionLevel {
     public int getPermIndex() {
         return this.permIndex;
     }
+
+    public static PermissionLevel getLevel(String level) {
+        for (PermissionLevel value : values()) {
+            if (value.name().equals(level)) {
+                return value;
+            }
+        }
+        return USER;
+    }
 }

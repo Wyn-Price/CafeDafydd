@@ -6,8 +6,7 @@ package com.wynprice.cafedafydd.common;
 public class DatabaseStrings {
 
     public static final String ID = "record_id";
-    public static final String NOT_PREFIX = "$$NOT$$";
-    public static final String INLINE_REQUEST_PREFIX = "$$INLINEREQUEST$$";
+    public static final String[] ALL_FILENAMES = new String[]{ Users.FILE_NAME, Sessions.FILE_NAME, Computers.FILE_NAME, Games.FILE_NAME };
 
     public static class Users {
         public static final String FILE_NAME = "users";
@@ -47,5 +46,4 @@ public class DatabaseStrings {
         public static final String GAME_RATING = "game_rating";
 
     }
-
 }

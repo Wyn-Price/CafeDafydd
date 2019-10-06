@@ -90,5 +90,7 @@ public class PacketRegistry {
         registerPacket(PacketStopSession.class, PacketStopSession::encode, PacketStopSession::decode);
         registerPacket(PacketCauseResync.class, emptyEncoder(), emptyDecoder(PacketCauseResync::new));
         registerPacket(PacketTryEditDatabase.class, PacketTryEditDatabase::encode, PacketTryEditDatabase::decode);
+        registerPacket(PacketEditDatabaseField.class, PacketEditDatabaseField::encode, PacketEditDatabaseField::decode);
+        registerPacket(PacketEditRecordDirect.class, PacketEditRecordDirect::encode, PacketEditRecordDirect::decode);
     }
 }

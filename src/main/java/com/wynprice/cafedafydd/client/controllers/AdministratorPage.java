@@ -55,4 +55,9 @@ public class AdministratorPage implements BaseController {
     public void onSearchSessions() {
         CafeDafyddMain.showPage(Page.SEARCH_SESSION);
     }
+
+    @FXML
+    public void onDirectDatabaseEdit() {
+        CafeDafyddMain.showPage(Page.DIRECT_DATABASE_EDIT);
+    }
 }

@@ -11,6 +11,7 @@ import com.wynprice.cafedafydd.common.entries.InlineEntry;
 import com.wynprice.cafedafydd.common.entries.NotEntry;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
 import lombok.Data;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ public abstract class Database {
 
     private static final String ID = "id";
 
+    @Getter
     private final DatabaseDefinition schema;
 
     /**
@@ -260,7 +262,7 @@ public abstract class Database {
 
     /**
      * Creates and adds a new database entry.
-     * @param form this is in the same format as all forms, but cannot contain {@link DatabaseStrings#NOT_PREFIX}
+     * @param form this is in the same format as all forms
      * @return the generated record.
      * @see com.wynprice.cafedafydd.common.utils.FormBuilder
      */
@@ -279,7 +281,7 @@ public abstract class Database {
         //If any of the entries haven't been set then just set them to an empty string
         for (int i = 0; i < entry.length; i++) {
             if(entry[i] == null) {
-                entry[i] = this.schema.getEntries()[i].getEntry(null);
+                entry[i] = this.schema.getEntries()[i + 1].getEntry(null);
             }
         }
 
@@ -290,6 +292,21 @@ public abstract class Database {
         this.reindexRecord(newEntry);
         this.writeToFile();
         return newEntry;
+    }
+
+    /**
+     * Removes the record from this database
+     * @param record the record to remove
+     * @return true if a record was removed, or false otherwise
+     */
+    public boolean removeEntry(DatabaseRecord record) {
+        boolean ret = this.entries.remove(record);
+        for (String field : this.fields) {
+            this.indexedRecords.get(field).remove(record);
+        }
+        this.indexedRecords.get(DatabaseStrings.ID).remove(record);
+        this.writeToFile();
+        return ret;
     }
 
     /**

@@ -44,7 +44,6 @@ public interface RecordEntry {
         }
     }
 
-
     default String getAsString() {
         throw new UnsupportedOperationException("Cannot convert " + this + " to string");
     }

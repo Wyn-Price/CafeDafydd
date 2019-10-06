@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
 public class StringEntry implements RecordEntry {
-    private String entry;
+    private String entry = "";
 
     @Override
     public String getAsString() {

@@ -20,6 +20,7 @@ public class DatabaseRecord {
     /**
      * The list of fields from the database. These fields should be in the same order as the {@link #entries}
      */
+    @Getter
     @ToString.Exclude
     private final List<String> fields;
 
