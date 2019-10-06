@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 
 @EqualsAndHashCode
 public class ArrayEntry implements RecordEntry {
-    private RecordEntry[] entry;
+    private RecordEntry[] entry = new RecordEntry[0];
 
     @Override
     public RecordEntry[] getAsArray() {

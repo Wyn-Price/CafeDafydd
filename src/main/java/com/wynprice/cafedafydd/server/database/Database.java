@@ -131,11 +131,14 @@ public abstract class Database {
     private void parseLine(String line, List<String> fileFields) {
         //The entries that have been read
         RecordEntry[] rawEntries = this.schema.parseLine(line);
-        RecordEntry[] readEntries = new RecordEntry[rawEntries.length - 1];
+        RecordEntry[] readEntries = new RecordEntry[this.fields.size()];
 
-        for (String field : fileFields) {
-            if(!ID.equals(field)) {
-                readEntries[this.fields.indexOf(field)] = rawEntries[fileFields.indexOf(field)];
+        for (String field : this.fields) {
+            int fieldIndex = this.fields.indexOf(field);
+            if(fileFields.contains(field)) { //The field is set in the database
+                readEntries[fieldIndex] = rawEntries[fileFields.indexOf(field)];
+            } else { //The field is not set in the database, and we need to generate an empty one
+                readEntries[fieldIndex] = this.schema.getEntries()[fieldIndex + 1/*+1 to allow for ID to be at index 0*/].getEntry(null);
             }
         }
 

@@ -19,7 +19,7 @@ public class DatabaseDefinition {
         return new DatabaseDefinition(entries);
     }
 
-    public RecordEntry[] parseLine(String line) {//fileFields
+    public RecordEntry[] parseLine(String line) {
         FileLineReader reader = new FileLineReader(line);
         return Arrays.stream(this.entries).map(f -> f.getEntry(reader)).toArray(RecordEntry[]::new);
     }
