@@ -2,13 +2,13 @@ package com.wynprice.cafedafydd.server.database;
 
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.RecordEntry;
+import com.wynprice.cafedafydd.common.entries.InlineEntry;
+import com.wynprice.cafedafydd.common.entries.NotEntry;
 import com.wynprice.cafedafydd.common.utils.ArrayUtils;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.common.utils.UtilCollectors;
 import com.wynprice.cafedafydd.server.PermissionLevel;
-import com.wynprice.cafedafydd.common.entries.InlineEntry;
-import com.wynprice.cafedafydd.common.entries.NotEntry;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
 import lombok.Data;
 import lombok.Getter;
@@ -53,7 +53,14 @@ public abstract class Database {
      */
     private final Map<String, List<DatabaseRecord>> indexedRecords = new HashMap<>();
 
+    /**
+     * Used for handling database backups
+     */
+    @Getter
+    private final DatabaseBackup backupHandler;
+
     Database() {
+        this.backupHandler = new DatabaseBackup(this);
         //Set and check the fields and path
         Field[] pairs = this.getDefinition();
         this.fields = Arrays.stream(pairs).map(Field::getFieldName).collect(Collectors.toList());
@@ -336,6 +343,7 @@ public abstract class Database {
      * @see DatabaseRecord#toFileString()
      */
     public void writeToFile() {
+        this.backupHandler.onChanged();
         //If the file parent doesn't exist, try and generate the parent folders and log if an error occurs.
         if(Files.notExists(this.path.getParent())) {
             try {
@@ -356,7 +364,6 @@ public abstract class Database {
             log.error("Unable to write database file " + this.path.getName(this.path.getNameCount() - 1), e);
         }
     }
-
 
     public List<String> getFieldList() {
         return this.fields;

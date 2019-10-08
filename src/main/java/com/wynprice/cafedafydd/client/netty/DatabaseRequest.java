@@ -1,8 +1,10 @@
 package com.wynprice.cafedafydd.client.netty;
 
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
+import com.wynprice.cafedafydd.common.BackupHeader;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketGetDatabaseEntries;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketHasDatabaseEntry;
+import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketRequestBackupHeaders;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
 import com.wynprice.cafedafydd.common.utils.NamedRecord;
@@ -43,6 +45,12 @@ public class DatabaseRequest {
      * The form to search a list of entries matching the given form. Matches are done with {@code s1.contains(s1) || s2.contains(s1)}
      */
     public static final RequestForm<List<DatabaseRecord>> SEARCH_ENTRIES = new RequestForm<>((r, d, f) -> new PacketGetDatabaseEntries(RequestType.SEARCH, r, d, f));
+
+    /**
+     * The request to get the list of backup headers for a database. This request form is ignored.
+     */
+    public static final RequestForm<List<BackupHeader>> BACKUP_HEADERS = new RequestForm<>((r, d, f) -> new PacketRequestBackupHeaders(r, d));
+
 
     /**
      * The form used to keep track of which requests have been sent, and to handle inbound requests

@@ -2,10 +2,12 @@ package com.wynprice.cafedafydd.server;
 
 import com.wynprice.cafedafydd.common.netty.NetworkDataDecoder;
 import com.wynprice.cafedafydd.common.netty.NetworkDataEncoder;
+import com.wynprice.cafedafydd.server.database.Databases;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -34,5 +36,12 @@ public class CafeDafyddServerMain {
             .group(bossGroup, workerGroup)
             .bind(5671).syncUninterruptibly();
 
+        classloadClasses();
+    }
+
+    @SneakyThrows(ClassNotFoundException.class)
+    private static void classloadClasses() {
+        Class.forName(ServerNetworkHandler.class.getName());
+        Class.forName(Databases.class.getName());
     }
 }

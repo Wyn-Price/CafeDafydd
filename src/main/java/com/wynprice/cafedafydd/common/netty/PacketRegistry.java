@@ -92,5 +92,7 @@ public class PacketRegistry {
         registerPacket(PacketTryEditDatabase.class, PacketTryEditDatabase::encode, PacketTryEditDatabase::decode);
         registerPacket(PacketEditDatabaseField.class, PacketEditDatabaseField::encode, PacketEditDatabaseField::decode);
         registerPacket(PacketEditRecordDirect.class, PacketEditRecordDirect::encode, PacketEditRecordDirect::decode);
+        registerPacket(PacketRequestBackupHeaders.class, PacketRequestBackupHeaders::encode, PacketRequestBackupHeaders::decode);
+        registerPacket(PacketBackupHeadersResult.class, PacketBackupHeadersResult::encode, PacketBackupHeadersResult::decode);
     }
 }

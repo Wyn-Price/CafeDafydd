@@ -51,7 +51,7 @@ public class ClientNetworkHandler extends NetworkHandler {
     }
 
     @NetworkHandle
-    public void handleDatabaseRequestEntriesResult(PacketDatabaseEntriesResult packet) {
+    public void handleRequestEntriesResult(PacketDatabaseEntriesResult packet) {
         //Handle the received database request result
         switch (packet.getType()) {
             case GET:
@@ -73,5 +73,10 @@ public class ClientNetworkHandler extends NetworkHandler {
     public void handleResync(PacketCauseResync packet) {
         //Get the current controller and resync it.
         PlatformImpl.runLater(() -> CafeDafyddMain.getController(BaseController.class).ifPresent(BaseController::resync));
+    }
+
+    @NetworkHandle
+    public void handleHeadersResult(PacketBackupHeadersResult packet) {
+        DatabaseRequest.BACKUP_HEADERS.receive(packet.getRequestID(), packet.getHeaderList());
     }
 }

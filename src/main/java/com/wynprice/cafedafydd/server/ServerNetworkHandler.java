@@ -272,6 +272,16 @@ public class ServerNetworkHandler extends NetworkHandler {
         }
     }
 
+    @NetworkHandle
+    public void requestBackupHeader(PacketRequestBackupHeaders packet) {
+        Optional<Database> database = Databases.getFromFile(packet.getDatabase());
+        if (database.isPresent()) {
+            this.sendPacket(new PacketBackupHeadersResult(packet.getRequestID(), database.get().getBackupHandler().getHeaders()));
+        } else {
+            this.sendPacket(new PacketDisplayError("Unable to view backup headers", "Could not find database " + packet.getDatabase()));
+        }
+    }
+
     private NamedRecord[] replaceFormUserId(NamedRecord... form) {
         return Arrays.stream(form)
             .map(f -> (f.getRecord() instanceof IntEntry && f.getRecord().getAsInt() == FormBuilder.USER_ID_REFERENCE ? NamedRecord.of(f.getField(), intRecord(this.userID)) : f))
