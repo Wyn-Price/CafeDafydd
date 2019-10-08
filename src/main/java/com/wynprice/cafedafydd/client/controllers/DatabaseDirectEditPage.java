@@ -27,6 +27,7 @@ import java.util.Arrays;
 
 public class DatabaseDirectEditPage implements BaseController {
     private static final Object COLUMN_PROPERTY_KEY = new Object();
+    private static final ChangeListener<String> EMPTY_STRING_LISTENER = (observable, oldValue, newValue) -> { };
 
     @FXML public TableView<DatabaseRecord> contents;
     @FXML public ComboBox<String> databaseCombobox;
@@ -61,12 +62,13 @@ public class DatabaseDirectEditPage implements BaseController {
             if(this.editedFieldListener != null) {
                 this.editedField.textProperty().removeListener(this.editedFieldListener);
             }
-            this.editedField.textProperty().addListener(this.editedFieldListener = (observable, oldValue, newValue) -> { });
+            this.editedField.textProperty().addListener(EMPTY_STRING_LISTENER);
 
             String string = record.getField(field).getAsFileString().toString();
             if(!string.equals(this.editedField.getText())) {
                 this.editedField.setText(string);
                 this.editedField.setDisable(false);
+                this.editedField.textProperty().removeListener(EMPTY_STRING_LISTENER);
                 this.editedField.textProperty().addListener(this.editedFieldListener = (observable, oldValue, newValue) ->
                     CafeDafyddMain.getClient().getHandler().sendPacket(new PacketEditDatabaseField(this.databaseCombobox.valueProperty().get(), record.getPrimaryField(), field, newValue)));
 
