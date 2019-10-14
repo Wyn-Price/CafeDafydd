@@ -75,20 +75,28 @@ public abstract class Database {
         //If the file exists try and load from it. Save the file then to ensure the file exists
         if(this.path.toFile().exists()) {
             try {
-                List<String> lines = Files.readAllLines(this.path);
-                List<String> fileFields = ArrayUtils.asList(lines.remove(0).split(","));
-                for (String line : lines) {
-                    this.parseLine(line, fileFields);
-                }
+                this.readAllLines(Files.readAllLines(this.path));
             } catch (IOException e) {
                 log.error("Unable to open csv file");
             }
+        } else {
+            this.writeToFile();
         }
-        this.writeToFile();
-
-
         //Reindex all the records into the indexedRecords field
         this.reindexAll();
+    }
+
+    /**
+     * Reads all the lines to the database. Clears the current entries.
+     * @param lines the lines to read.
+     */
+    public void readAllLines(List<String> lines) {
+        this.entries.clear();
+        List<String> fileFields = ArrayUtils.asList(lines.remove(0).split(","));
+        for (String line : lines) {
+            this.parseLine(line, fileFields);
+        }
+        this.writeToFile();
     }
 
     /**
@@ -356,13 +364,21 @@ public abstract class Database {
 
         //Try and write the databse to the file. This occurs by first writing the fields, then the records #toFileString
         try {
-            List<String> lines = new ArrayList<>();
-            lines.add(ID + "," + String.join(",", this.fields));
-            this.entries.stream().map(DatabaseRecord::toFileString).forEach(lines::add);
-            Files.write(this.path, lines);
+            Files.write(this.path, this.getFileGeneratedList());
         } catch (IOException e) {
             log.error("Unable to write database file " + this.path.getName(this.path.getNameCount() - 1), e);
         }
+    }
+
+    /**
+     * Gets the lines that are written into the file or backup file
+     * @return the list to put in a file
+     */
+    public List<String> getFileGeneratedList() {
+        List<String> lines = new ArrayList<>();
+        lines.add(ID + "," + String.join(",", this.fields));
+        this.entries.stream().map(DatabaseRecord::toFileString).forEach(lines::add);
+        return lines;
     }
 
     public List<String> getFieldList() {

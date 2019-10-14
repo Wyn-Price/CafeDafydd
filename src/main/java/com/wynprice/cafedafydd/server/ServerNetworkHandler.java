@@ -276,9 +276,33 @@ public class ServerNetworkHandler extends NetworkHandler {
     public void requestBackupHeader(PacketRequestBackupHeaders packet) {
         Optional<Database> database = Databases.getFromFile(packet.getDatabase());
         if (database.isPresent()) {
+            ensurePerms(PermissionLevel.ADMINISTRATOR, "Viewing backup headers");
             this.sendPacket(new PacketBackupHeadersResult(packet.getRequestID(), database.get().getBackupHandler().getHeaders()));
         } else {
             this.sendPacket(new PacketDisplayError("Unable to view backup headers", "Could not find database " + packet.getDatabase()));
+        }
+    }
+
+    @NetworkHandle
+    public void requestBackupEntry(PacketRequestBackupEntry packet) {
+        Optional<Database> database = Databases.getFromFile(packet.getDatabase());
+        if (database.isPresent()) {
+            ensurePerms(PermissionLevel.ADMINISTRATOR, "Viewing backup entry");
+            this.sendPacket(new PacketBackupEntryResult(packet.getRequestID(), database.get().getBackupHandler().getFileListForId(packet.getHeaderID())));
+        } else {
+            this.sendPacket(new PacketDisplayError("Unable to view backup entry", "Could not find database " + packet.getDatabase()));
+        }
+    }
+
+    @NetworkHandle
+    public void revertDatabase(PacketRevertDatabase packet) {
+        Optional<Database> database = Databases.getFromFile(packet.getDatabase());
+        if (database.isPresent()) {
+            ensurePerms(PermissionLevel.ADMINISTRATOR, "Reverting database");
+            database.get().getBackupHandler().revertToBackup(packet.getBackupId());
+            this.sendPacket(new PacketCauseResync());
+        } else {
+            this.sendPacket(new PacketDisplayError("Unable to revert database", "Could not find database " + packet.getDatabase()));
         }
     }
 

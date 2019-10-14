@@ -58,35 +58,30 @@ public class DatabaseBackup implements AutoCloseable {
     }
 
     public void onChanged() {
-        long ms = System.currentTimeMillis();
-        if(ms - this.prevBackupTime > MS_TIME_BETWEEN_BACKUPS) {
-            this.prevBackupTime = ms;
+        try {
+            List<String> collected = this.database.getFileGeneratedList();
 
-            try {
-                List<String> collected = this.database.getEntries().map(DatabaseRecord::toFileString).collect(Collectors.toList());
+            @Cleanup ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-                @Cleanup ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-                @Cleanup DataOutputStream dos = new DataOutputStream(baos);
-                dos.writeInt(collected.size());
-                for (String s : collected) {
-                    dos.writeUTF(s);
-                }
-
-                byte[] compressed = CompressionUtils.compress(baos.toByteArray());
-
-
-                BackupHeader header = new BackupHeader(this.headers.size(), this.file.length(), new Date(ms), compressed.length);
-                this.headers.add(header);
-
-                //Append a new entry
-                this.file.seek(header.getIndex());
-                this.file.writeLong(header.getBackupTime().getTime());
-                this.file.writeInt(header.getSize());
-                this.file.write(compressed);
-            } catch (IOException e) {
-                log.error("Unable to write to database file: " + this.baseFile.getAbsolutePath(), e);
+            @Cleanup DataOutputStream dos = new DataOutputStream(baos);
+            dos.writeInt(collected.size());
+            for (String s : collected) {
+                dos.writeUTF(s);
             }
+
+            byte[] compressed = CompressionUtils.compress(baos.toByteArray());
+
+
+            BackupHeader header = new BackupHeader(this.headers.size(), this.file.length(), new Date(System.currentTimeMillis()), compressed.length);
+            this.headers.add(header);
+
+            //Append a new entry
+            this.file.seek(header.getIndex());
+            this.file.writeLong(header.getBackupTime().getTime());
+            this.file.writeInt(header.getSize());
+            this.file.write(compressed);
+        } catch (IOException e) {
+            log.error("Unable to write to database file: " + this.baseFile.getAbsolutePath(), e);
         }
     }
 
@@ -108,7 +103,11 @@ public class DatabaseBackup implements AutoCloseable {
         }
     }
 
-    private List<String> getFileListForId(int id) {
+    public void revertToBackup(int id) {
+        this.database.readAllLines(this.getFileListForId(id));
+    }
+
+    public List<String> getFileListForId(int id) {
         List<String> fileLines = new ArrayList<>();
         BackupHeader header = this.headers.get(id);
 

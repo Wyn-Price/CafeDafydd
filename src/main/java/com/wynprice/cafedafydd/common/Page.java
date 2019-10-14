@@ -19,7 +19,8 @@ public enum Page {
 
     STAFF_PANEL("staff_panel"),
     ADMINISTRATOR_PAGE("administrator_panel"),
-    DIRECT_DATABASE_EDIT("database_direct_edit_page");
+    DIRECT_DATABASE_EDIT("database_direct_edit_page"),
+    VIEW_BACKUPS("view_backups");
 
     @Getter private final String fileName;
 

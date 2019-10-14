@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.collections.*?>
+<?import javafx.geometry.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.text.Font?>
+
+<GridPane alignment="CENTER" hgap="10.0" vgap="10.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="com.wynprice.cafedafydd.client.controllers.ViewBackupsPage">
+  <columnConstraints>
+    <ColumnConstraints halignment="LEFT" maxWidth="200.0" minWidth="200.0" percentWidth="36.0" prefWidth="200.0" />
+    <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="350.0" percentWidth="64.0" prefWidth="350.0" />
+  </columnConstraints>
+  <padding>
+    <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+  </padding>
+  <rowConstraints>
+    <RowConstraints maxHeight="68.0" prefHeight="68.0" />
+    <RowConstraints maxHeight="1.7976931348623157E308" percentHeight="0.0" prefHeight="59.0" />
+    <RowConstraints maxHeight="1.7976931348623157E308" percentHeight="0.0" prefHeight="400.0" />
+    <RowConstraints maxHeight="80.0" prefHeight="80.0" />
+  </rowConstraints>
+  <Label text="Database History Viewing" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="0" GridPane.rowSpan="1">
+    <font>
+      <Font name="Arial" size="24.0" />
+    </font>
+    <GridPane.margin>
+      <Insets bottom="20.0" top="20.0" />
+    </GridPane.margin>
+  </Label>
+  <ListView fx:id="headersList" GridPane.columnIndex="0" GridPane.columnSpan="1" GridPane.rowIndex="2" />
+  <Button defaultButton="true" onAction="#backButtonClicked" prefHeight="40.0" prefWidth="100.0" text="Back" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.rowSpan="1">
+    <GridPane.margin>
+      <Insets bottom="20.0" top="20.0" />
+    </GridPane.margin>
+  </Button>
+  <Label text="Select Database:" GridPane.columnIndex="0" GridPane.columnSpan="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1" GridPane.rowSpan="1">
+    <font>
+      <Font name="Arial" size="16.0" />
+    </font>
+    <GridPane.margin>
+      <Insets bottom="20.0" top="20.0" />
+    </GridPane.margin>
+  </Label>
+  <ComboBox fx:id="databaseComboBox" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+  <TextArea fx:id="backupEntryText" editable="false" prefWidth="200.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+  <Button defaultButton="true" onAction="#revertButtonClicked" prefHeight="40.0" prefWidth="100.0" text="Revert" GridPane.columnIndex="0" GridPane.columnSpan="1" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.rowSpan="1">
+    <tooltip>
+      <Tooltip text="Revert the database to this state. This can be reverted." />
+    </tooltip>
+    <GridPane.margin>
+      <Insets bottom="20.0" top="20.0" />
+    </GridPane.margin>
+  </Button>
+</GridPane>

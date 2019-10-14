@@ -4,6 +4,7 @@ import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.common.BackupHeader;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketGetDatabaseEntries;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketHasDatabaseEntry;
+import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketRequestBackupEntry;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketRequestBackupHeaders;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
@@ -34,36 +35,42 @@ public class DatabaseRequest {
     /**
      * The form to see if a database has an entry matching the given form
      */
-    public static final RequestForm<Boolean> HAS_ENTRY = new RequestForm<>(PacketHasDatabaseEntry::new);
+    public static final NamedRecordForm<Boolean> HAS_ENTRY = new NamedRecordForm<>(PacketHasDatabaseEntry::new);
 
     /**
      * The form to get a list of entries matching the given form.
      */
-    public static final RequestForm<List<DatabaseRecord>> GET_ENTRIES = new RequestForm<>((r, d, f) -> new PacketGetDatabaseEntries(RequestType.GET, r, d, f));
+    public static final NamedRecordForm<List<DatabaseRecord>> GET_ENTRIES = new NamedRecordForm<>((r, d, f) -> new PacketGetDatabaseEntries(RequestType.GET, r, d, f));
 
     /**
      * The form to search a list of entries matching the given form. Matches are done with {@code s1.contains(s1) || s2.contains(s1)}
      */
-    public static final RequestForm<List<DatabaseRecord>> SEARCH_ENTRIES = new RequestForm<>((r, d, f) -> new PacketGetDatabaseEntries(RequestType.SEARCH, r, d, f));
+    public static final NamedRecordForm<List<DatabaseRecord>> SEARCH_ENTRIES = new NamedRecordForm<>((r, d, f) -> new PacketGetDatabaseEntries(RequestType.SEARCH, r, d, f));
 
     /**
-     * The request to get the list of backup headers for a database. This request form is ignored.
+     * The request to get the list of backup headers for a database.
      */
-    public static final RequestForm<List<BackupHeader>> BACKUP_HEADERS = new RequestForm<>((r, d, f) -> new PacketRequestBackupHeaders(r, d));
+    public static final RequestForm<List<BackupHeader>, Void> BACKUP_HEADERS = new RequestForm<>((r, d, f) -> new PacketRequestBackupHeaders(r, d));
+
+    /**
+     * The request to get the list of backup entries for a database.
+     */
+    public static final RequestForm<List<String>, Integer> BACKUP_ENTRIES = new RequestForm<>(PacketRequestBackupEntry::new);
 
 
     /**
      * The form used to keep track of which requests have been sent, and to handle inbound requests
      * @param <D>
+     * @param <T> the type
      */
     //TODO: make the requests "timeout" after a specified time so the data isn't held for ages and fill up the memory
     @RequiredArgsConstructor
-    public static class RequestForm<D> {
+    public static class RequestForm<D, T> {
 
         /**
          * The interface used to create the packets that are sent to the server.
          */
-        private final PacketCreation creation;
+        private final PacketCreation<?, T> creation;
 
         /**
          * The current integer requests ID.
@@ -76,31 +83,15 @@ public class DatabaseRequest {
         private final Map<Integer, Consumer<D>> storage = new HashMap<>();
 
         /**
-         * Send the request to the server. Delegates to {@link #sendRequest(String, Consumer, NamedRecord[])},
-         * with {@code form} going to {@link FormBuilder#getForm()}
-         *
-         * @param databaseFile the database file to send to the request to
-         * @param receiver the handler to use when the request is complete
-         * @param form the FormBuilder to create the form from
-         * @see #sendRequest(String, Consumer, NamedRecord[])
-         */
-        public void sendRequest(String databaseFile, Consumer<D> receiver, FormBuilder form) {
-            this.sendRequest(databaseFile, receiver, form.getForm());
-        }
-
-        /**
          * Send the request to the server
          * @param databaseFile the database file to send to the request to
          * @param receiver the handler to use when the request is complete
-         * @param form the form to use
-         * @see #sendRequest(String, Consumer, FormBuilder)
+         * @param data the data to additionally send
          */
-        public void sendRequest(String databaseFile, Consumer<D> receiver, NamedRecord... form) {
-            //Up the total requests id and get the nextChar id. Set the receiver into the storage with that id,
-            //Then then send the packet created with the PacketCreation to the server.
+        public void sendRequest(String databaseFile, Consumer<D> receiver, T data) {
             int id = this.requests++;
             this.storage.put(id, receiver);
-            CafeDafyddMain.getClient().getHandler().sendPacket(this.creation.createPacket(id, databaseFile, form));
+            CafeDafyddMain.getClient().getHandler().sendPacket(this.creation.createPacket(id, databaseFile, data));
         }
 
 
@@ -118,14 +109,39 @@ public class DatabaseRequest {
                 log.error(new IllegalArgumentException("Could not find request with id " + requestID));
             }
         }
+    }
 
+    public static class NamedRecordForm<D> extends RequestForm<D, NamedRecord[]> {
+
+        public NamedRecordForm(PacketCreation<?, NamedRecord[]> creation) {
+            super(creation);
+        }
+
+        /**
+         * Send the request to the server. Delegates to {@link #sendRequest(String, Consumer, NamedRecord[])},
+         * with {@code form} going to {@link FormBuilder#getForm()}
+         *
+         * @param databaseFile the database file to send to the request to
+         * @param receiver the handler to use when the request is complete
+         * @param form the FormBuilder to create the form from
+         * @see #sendRequest(String, Consumer, NamedRecord[])
+         */
+        public void sendRequest(String databaseFile, Consumer<D> receiver, FormBuilder form) {
+            this.sendRequest(databaseFile, receiver, form.getForm());
+        }
+
+        //Allow for varargs
+        @Override
+        public void sendRequest(String databaseFile, Consumer<D> receiver, NamedRecord... data) {
+            super.sendRequest(databaseFile, receiver, data);
+        }
     }
 
     /**
      * The interface used to create packets from the request id, database name and form.
      * @param <P> The packet class of which to construct a packet.
      */
-    private interface PacketCreation<P> {
-        P createPacket(int requestID, String databaseFile, NamedRecord[] form);
+    private interface PacketCreation<P, T> {
+        P createPacket(int requestID, String databaseFile, T data);
     }
 }

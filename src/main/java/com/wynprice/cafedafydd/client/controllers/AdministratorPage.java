@@ -60,4 +60,9 @@ public class AdministratorPage implements BaseController {
     public void onDirectDatabaseEdit() {
         CafeDafyddMain.showPage(Page.DIRECT_DATABASE_EDIT);
     }
+
+    @FXML
+    public void onBackupsEdit() {
+        CafeDafyddMain.showPage(Page.VIEW_BACKUPS);
+    }
 }

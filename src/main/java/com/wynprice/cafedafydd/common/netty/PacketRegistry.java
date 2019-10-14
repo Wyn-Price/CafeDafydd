@@ -94,5 +94,8 @@ public class PacketRegistry {
         registerPacket(PacketEditRecordDirect.class, PacketEditRecordDirect::encode, PacketEditRecordDirect::decode);
         registerPacket(PacketRequestBackupHeaders.class, PacketRequestBackupHeaders::encode, PacketRequestBackupHeaders::decode);
         registerPacket(PacketBackupHeadersResult.class, PacketBackupHeadersResult::encode, PacketBackupHeadersResult::decode);
+        registerPacket(PacketRequestBackupEntry.class, PacketRequestBackupEntry::encode, PacketRequestBackupEntry::decode);
+        registerPacket(PacketBackupEntryResult.class, PacketBackupEntryResult::encode, PacketBackupEntryResult::decode);
+        registerPacket(PacketRevertDatabase.class, PacketRevertDatabase::encode, PacketRevertDatabase::decode);
     }
 }

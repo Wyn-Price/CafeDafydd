@@ -79,4 +79,9 @@ public class ClientNetworkHandler extends NetworkHandler {
     public void handleHeadersResult(PacketBackupHeadersResult packet) {
         DatabaseRequest.BACKUP_HEADERS.receive(packet.getRequestID(), packet.getHeaderList());
     }
+
+    @NetworkHandle
+    public void handleBackupEntry(PacketBackupEntryResult packet) {
+        DatabaseRequest.BACKUP_ENTRIES.receive(packet.getRequestID(), packet.getEntryList());
+    }
 }
