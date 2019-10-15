@@ -1,7 +1,5 @@
 package com.wynprice.cafedafydd.server.utils;
 
-import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,7 +33,7 @@ public class Algorithms {
      * @param <T> the type to search with, taken from {@code mapper}
      * @return the found list object in that list, or {@link Optional#empty()} if none could be found.
      */
-    public static <R, T> Optional<R> doMappedSearch(List<R> list, Function<R, T> mapper, T object, Comparator<? super T> comparator) {
+    public static <R, T> Optional<R> doMappedSearch(List<R> list, Function<R, T> mapper, T object, Comparator<T> comparator) {
         int index = binarySearchIndex(list, mapper, object, comparator,true);
         return index < 0 ? Optional.empty() : Optional.of(list.get(index));
     }
@@ -60,7 +58,7 @@ public class Algorithms {
      * @return the sub list within the main list, or an empty list if none could be found.
      * @see #binarySearchIndex(List, Function, Object, Comparator, boolean)
      */
-    public static <E, T> List<E> splicedBinarySearch(List<E> list, Function<E, T> mapper, T object, Comparator<? super T> comparator) {
+    public static <E, T> List<E> splicedBinarySearch(List<E> list, Function<E, T> mapper, T object, Comparator<T> comparator) {
         //Get the searched index of the object. If it's less than 0, then the element doesn't exist in the list and an empty array should be returned.
         int index = binarySearchIndex(list, mapper, object, comparator, true);
         if(index < 0) {
@@ -167,7 +165,7 @@ public class Algorithms {
      * @param <T> the list type
      * @return the same object as {@code sort}
      */
-    public static <T> List<T> quickSort(List<T> sort, Comparator<? super T> comparator) {
+    public static <T> List<T> quickSort(List<T> sort, Comparator<T> comparator) {
         return doQuickSort(sort, 0, sort.size() - 1, comparator);
     }
 

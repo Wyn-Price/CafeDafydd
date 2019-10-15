@@ -1,4 +1,4 @@
-package com.wynprice.cafedafydd.server.database;
+package com.wynprice.cafedafydd.common;
 
 import lombok.RequiredArgsConstructor;
 

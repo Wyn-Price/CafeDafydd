@@ -1,11 +1,9 @@
 package com.wynprice.cafedafydd.server.database;
 
 import com.wynprice.cafedafydd.common.BackupHeader;
-import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.server.utils.CompressionUtils;
 import lombok.Cleanup;
 import lombok.Getter;
-import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.*;
@@ -15,7 +13,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Log4j2
 public class DatabaseBackup implements AutoCloseable {

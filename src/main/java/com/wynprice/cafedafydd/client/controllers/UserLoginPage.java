@@ -15,8 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 
-import static com.wynprice.cafedafydd.common.DatabaseStrings.Sessions;
-import static com.wynprice.cafedafydd.common.RecordEntry.intRecord;
+import static com.wynprice.cafedafydd.common.FieldDefinitions.Sessions;
 
 
 public class UserLoginPage implements BaseController {
@@ -32,7 +31,7 @@ public class UserLoginPage implements BaseController {
             boolean disabled = newValue.intValue() < 0;
             if(newValue.intValue() >= 0) {
                 Session session = this.sessionList.getItems().get(newValue.intValue());
-                disabled |= session.getEndDate() != DateUtils.EMPTY_DATE;
+                disabled |= !DateUtils.EMPTY_DATE.equals(session.getEndDate());
             }
             this.deleteButton.setDisable(disabled);
         });
@@ -46,7 +45,7 @@ public class UserLoginPage implements BaseController {
             for (DatabaseRecord record : records) {
                 this.sessionList.getItems().add(Session.fromRecord(record));
             }
-        }), FormBuilder.create().with(Sessions.USER_ID, intRecord(FormBuilder.USER_ID_REFERENCE)));
+        }), FormBuilder.create().withAsUserID(Sessions.USER_ID));
     }
 
     @FXML

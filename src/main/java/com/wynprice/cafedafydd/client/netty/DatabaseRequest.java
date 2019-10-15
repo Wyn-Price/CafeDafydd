@@ -6,9 +6,9 @@ import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketGetDatabas
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketHasDatabaseEntry;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketRequestBackupEntry;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketRequestBackupHeaders;
+import com.wynprice.cafedafydd.common.search.SearchRequirement;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
-import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.common.utils.RequestType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -111,20 +111,20 @@ public class DatabaseRequest {
         }
     }
 
-    public static class NamedRecordForm<D> extends RequestForm<D, NamedRecord[]> {
+    public static class NamedRecordForm<D> extends RequestForm<D, SearchRequirement[]> {
 
-        public NamedRecordForm(PacketCreation<?, NamedRecord[]> creation) {
+        public NamedRecordForm(PacketCreation<?, SearchRequirement[]> creation) {
             super(creation);
         }
 
         /**
-         * Send the request to the server. Delegates to {@link #sendRequest(String, Consumer, NamedRecord[])},
+         * Send the request to the server. Delegates to {@link #sendRequest(String, Consumer, SearchRequirement[])},
          * with {@code form} going to {@link FormBuilder#getForm()}
          *
          * @param databaseFile the database file to send to the request to
          * @param receiver the handler to use when the request is complete
          * @param form the FormBuilder to create the form from
-         * @see #sendRequest(String, Consumer, NamedRecord[])
+         * @see #sendRequest(String, Consumer, SearchRequirement[])
          */
         public void sendRequest(String databaseFile, Consumer<D> receiver, FormBuilder form) {
             this.sendRequest(databaseFile, receiver, form.getForm());
@@ -132,7 +132,7 @@ public class DatabaseRequest {
 
         //Allow for varargs
         @Override
-        public void sendRequest(String databaseFile, Consumer<D> receiver, NamedRecord... data) {
+        public void sendRequest(String databaseFile, Consumer<D> receiver, SearchRequirement... data) {
             super.sendRequest(databaseFile, receiver, data);
         }
     }

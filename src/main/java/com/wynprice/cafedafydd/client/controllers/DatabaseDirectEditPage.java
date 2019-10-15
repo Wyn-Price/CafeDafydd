@@ -3,31 +3,21 @@ package com.wynprice.cafedafydd.client.controllers;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
+import com.wynprice.cafedafydd.common.FieldDefinition;
+import com.wynprice.cafedafydd.common.RecordType;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketEditDatabaseField;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketEditRecordDirect;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.KeyEvent;
-import javafx.util.Callback;
-
-import java.util.Arrays;
 
 public class DatabaseDirectEditPage implements BaseController {
-    private static final Object COLUMN_PROPERTY_KEY = new Object();
-
     @FXML public TableView<DatabaseRecord> contents;
     @FXML public ComboBox<String> databaseCombobox;
     @FXML public TextField editedField;
@@ -57,16 +47,16 @@ public class DatabaseDirectEditPage implements BaseController {
                 return;
             }
             DatabaseRecord record = this.contents.getItems().get(pos.getRow());
-            String field = record.getFields().get(pos.getColumn() - 1);
+            FieldDefinition<?> definition = record.getEntries()[pos.getColumn() - 1].getDefinition();
             if(this.editedFieldListener != null) {
                 this.editedField.textProperty().removeListener(this.editedFieldListener);
             }
-            String string = record.getField(field).getAsFileString().toString();
+            String string = definition.getResult(record, RecordType::getAsFileString).toString();
             if(!string.equals(this.editedField.getText())) {
                 this.editedField.setText(string);
                 this.editedField.setDisable(false);
                 this.editedField.textProperty().addListener(this.editedFieldListener = (observable, oldValue, newValue) ->
-                    CafeDafyddMain.getClient().getHandler().sendPacket(new PacketEditDatabaseField(this.databaseCombobox.valueProperty().get(), record.getPrimaryField(), field, newValue)));
+                    CafeDafyddMain.getClient().getHandler().sendPacket(new PacketEditDatabaseField(this.databaseCombobox.valueProperty().get(), record.getPrimaryField(), definition.getFieldName(), newValue)));
             }
         });
 
@@ -94,16 +84,19 @@ public class DatabaseDirectEditPage implements BaseController {
                         idColumn.setText("ID");
                         this.contents.getColumns().add(idColumn);
 
-                        for (String field : record.getFields()) {
+                        for (NamedRecord<?> entry : record.getEntries()) {
+
                             TableColumn<DatabaseRecord, String> column = new TableColumn<>();
-                            column.getProperties().put(COLUMN_PROPERTY_KEY, field);
                             column.setPrefWidth(-1);
-                            column.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().getField(field).getAsFileString().toString()));
-                            column.setText(field);
+                            column.setCellValueFactory(param -> new ReadOnlyStringWrapper(
+                                entry.getDefinition().getResult(param.getValue(), RecordType::getAsFileString).toString()
+                            ));
+                            column.setText(entry.getDefinition().getFieldName());
                             column.setEditable(true);
 
                             this.contents.getColumns().add(column);
                         }
+
                         setHeaders = true;
                     }
 

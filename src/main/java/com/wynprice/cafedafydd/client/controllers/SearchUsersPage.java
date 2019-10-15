@@ -18,8 +18,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.text.Font;
 import lombok.Value;
 
-import static com.wynprice.cafedafydd.common.RecordEntry.*;
-import static com.wynprice.cafedafydd.common.DatabaseStrings.Users;
+import static com.wynprice.cafedafydd.common.FieldDefinitions.Users;
 
 
 public class SearchUsersPage implements BaseController {
@@ -47,13 +46,13 @@ public class SearchUsersPage implements BaseController {
         Platform.runLater(() -> {
             FormBuilder form = FormBuilder.create();
             if(!this.usernameText.getText().isEmpty()) {
-                form.with(Users.USERNAME, stringRecord(this.usernameText.getText()));
+                form.with(Users.USERNAME, this.usernameText.getText());
             }
             if(!this.emailText.getText().isEmpty()) {
-                form.with(Users.EMAIL, stringRecord(this.emailText.getText()));
+                form.with(Users.EMAIL, this.emailText.getText());
             }
             if(this.permissionComboBox.getValue() != null && !this.permissionComboBox.getValue().isEmpty()) {
-                form.with(Users.PERMISSION_LEVEL, stringRecord(this.permissionComboBox.getValue()));
+                form.with(Users.PERMISSION_LEVEL, this.permissionComboBox.getValue());
             }
 
             if(form.isEmpty()) {
@@ -68,9 +67,9 @@ public class SearchUsersPage implements BaseController {
                         this.searchResult.getItems().add(new UserRecord(
                             record.getPrimaryField(),
 
-                            "Username: " + bloat(record.getField(Users.USERNAME).getAsString()) +
-                                "Email: " + bloat(record.getField(Users.EMAIL).getAsString()) + "    " +
-                                "Permissions: " +bloat(record.getField(Users.PERMISSION_LEVEL).getAsString()) + "    "
+                            "Username: " + bloat(record.get(Users.USERNAME)) +
+                                "Email: " + bloat(record.get(Users.EMAIL)) + "    " +
+                                "Permissions: " +bloat(record.get(Users.PERMISSION_LEVEL)) + "    "
 
                         ));
                     }
@@ -122,9 +121,9 @@ public class SearchUsersPage implements BaseController {
                     e.setTitle("Edit User");
                     e.setConsumer((hasUsername, username, hasEmail, email, hasPassword, passwordHash) -> {
                         FormBuilder form = FormBuilder.create()
-                            .with(Users.USERNAME, stringRecord(username)).when(hasUsername)
-                            .with(Users.EMAIL, stringRecord(email)).when(hasEmail)
-                            .with(Users.PASSWORD_HASH, stringRecord(passwordHash)).when(hasPassword);
+                            .with(Users.USERNAME, username).when(hasUsername)
+                            .with(Users.EMAIL, email).when(hasEmail)
+                            .with(Users.PASSWORD_HASH, passwordHash).when(hasPassword);
 
                         if(!form.isEmpty()) {
                             CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Users.FILE_NAME, item.id, form.getForm()));

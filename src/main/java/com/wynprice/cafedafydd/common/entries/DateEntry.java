@@ -1,8 +1,8 @@
 package com.wynprice.cafedafydd.common.entries;
 
+import com.wynprice.cafedafydd.common.RecordEntry;
 import com.wynprice.cafedafydd.common.utils.ByteBufUtils;
 import com.wynprice.cafedafydd.common.utils.DateUtils;
-import com.wynprice.cafedafydd.common.RecordEntry;
 import io.netty.buffer.ByteBuf;
 import lombok.EqualsAndHashCode;
 

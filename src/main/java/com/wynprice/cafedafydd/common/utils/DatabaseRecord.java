@@ -1,68 +1,60 @@
 package com.wynprice.cafedafydd.common.utils;
 
-import com.wynprice.cafedafydd.common.DatabaseStrings;
-import com.wynprice.cafedafydd.common.RecordEntry;
-import com.wynprice.cafedafydd.common.entries.IntEntry;
+import com.wynprice.cafedafydd.common.DatabaseField;
+import com.wynprice.cafedafydd.common.FieldDefinition;
+import com.wynprice.cafedafydd.common.FieldDefinitions;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-/**
- * Represents a record in a database.
- */
 @ToString
-@RequiredArgsConstructor
 public class DatabaseRecord {
 
-    /**
-     * The list of fields from the database. These fields should be in the same order as the {@link #entries}
-     */
-    @Getter
-    @ToString.Exclude
-    private final List<String> fields;
-
-    /**
-     * This records primary field. This is unique per record
-     */
     @Getter
     private final int primaryField;
 
-    /**
-     * This is the record entries for this record. This should be in the same order as {@link #fields}
-     */
     @Getter
-    private final RecordEntry[] entries;
+    private final NamedRecord[] entries;
 
-    /**
-     * Converts this record to a string to be put in the csv file.
-     * @return The csv line string.
-     */
-    public String toFileString() {
-        return this.primaryField + "," + String.join(",", () -> Arrays.stream(this.entries).map(RecordEntry::getAsFileString).iterator());
+    @SuppressWarnings("unchecked")
+    public DatabaseRecord(int primaryField, FieldDefinition[] definitions, DatabaseField[] entries) {
+        this.primaryField = primaryField;
+
+        //Normally, I wouldn't store the stream as a variable, but for whatever reason if i try otherwise the compiler
+        //Shouts at me. No idea why this would be.
+        Stream<NamedRecord> stream =
+            IntStream.range(0, definitions.length)
+            .mapToObj(i -> NamedRecord.of(definitions[i], entries[i]));
+        this.entries = stream.toArray(NamedRecord[]::new);
     }
 
-    /**
-     * Gets the field
-     * @param field the field to get the entry from
-     * @return the value for the specified field
-     */
-    public RecordEntry getField(String field) {
-        if(DatabaseStrings.ID.equals(field)) {
-            return new IntEntry().setInt(this.primaryField);
+    @SuppressWarnings("unchecked")
+    private <T> NamedRecord<T> findEntry(FieldDefinition<T> definition) {
+        if(definition == FieldDefinitions.ID) {
+            return (NamedRecord<T>) FieldDefinitions.ID.create(this.primaryField);
         }
-        return this.entries[this.fields.indexOf(field)];
+        return Arrays.stream(this.entries)
+            .filter(e -> e.getDefinition() == definition)
+            .collect(UtilCollectors.toSingleEntry())
+            .orElseThrow(() -> new IllegalArgumentException("Unable to find record entry: " + definition + " in fields " + Arrays.toString(this.entries)));
     }
 
-    /**
-     * Sets the entries to this field
-     * @param field the field to set to
-     * @param value the value to set with the field
-     */
-    public void setField(String field, RecordEntry value) {
-        this.entries[this.fields.indexOf(field)] = value;
+    public <T> DatabaseField<T> getRawField(FieldDefinition<T> definition) {
+        return this.findEntry(definition).getRecord();
+    }
+
+    public <T> T get(FieldDefinition<T> definition) {
+        return this.getRawField(definition).getData();
+    }
+
+    public <T> void set(FieldDefinition<T> definition, T value) {
+        this.findEntry(definition).getRecord().setData(value);
+    }
+
+    public String toFileString() {
+        return this.primaryField + "," + String.join(",", () -> Arrays.stream(this.entries).map(NamedRecord::getToString).iterator());
     }
 }
-

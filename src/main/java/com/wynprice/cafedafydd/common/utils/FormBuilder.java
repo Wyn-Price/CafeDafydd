@@ -1,8 +1,7 @@
 package com.wynprice.cafedafydd.common.utils;
 
-import com.wynprice.cafedafydd.common.RecordEntry;
-import com.wynprice.cafedafydd.common.entries.InlineEntry;
-import com.wynprice.cafedafydd.common.entries.NotEntry;
+import com.wynprice.cafedafydd.common.FieldDefinition;
+import com.wynprice.cafedafydd.common.search.SearchRequirement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,8 +10,6 @@ import java.util.List;
  * Form builders are helper classes used to build the forms that are used for database requests.
  */
 public class FormBuilder {
-
-    public static final int USER_ID_REFERENCE = -109813; //A random number. Used as a placeholder for the user id
 
     private FormBuilder() { }
 
@@ -27,7 +24,7 @@ public class FormBuilder {
     /**
      * The form list. When {@link #getForm()} is called, this is compiled into an array.
      */
-    private final List<NamedRecord> form = new ArrayList<>();
+    private final List<SearchRequirement> form = new ArrayList<>();
 
     /**
      * Adds the field and value to the form
@@ -35,8 +32,18 @@ public class FormBuilder {
      * @param value the {@code field}'s value to put in the form
      * @return itself
      */
-    public FormBuilder with(String field, RecordEntry value) {
-        this.form.add(NamedRecord.of(field, value));
+    public <T> FormBuilder with(FieldDefinition<T> field, T value) {
+        this.form.add(new SearchRequirement.DirectSearch().setRecord(field.create(value)));
+        return this;
+    }
+
+    /**
+     * Adds the field, with the value being the current users id, to the form
+     * @param field the field to put in the form
+     * @return itself
+     */
+    public FormBuilder withAsUserID(FieldDefinition<Integer> field) {
+        this.form.add(new SearchRequirement.UserIdReference().setDefinition(field));
         return this;
     }
 
@@ -49,13 +56,13 @@ public class FormBuilder {
      * @param form the form to use to request in the other database.
      * @return itself
      */
-    public FormBuilder withInline(String field, String requestDatabase, String requestDatabaseField, NamedRecord... form) {
-        this.form.add(NamedRecord.of(field,
-            new InlineEntry()
-                .setRequestDatabase(requestDatabase)
-                .setRequestDatabaseField(requestDatabaseField)
-                .setForm(form)
-        ));
+    public <T> FormBuilder withInline(FieldDefinition<T> field, String requestDatabase, FieldDefinition<T> requestDatabaseField, SearchRequirement... form) {
+        this.form.add(new SearchRequirement.InlineSearch()
+            .setDefinition(field)
+            .setRequestDatabase(requestDatabase)
+            .setRequestDatabaseField(requestDatabaseField)
+            .setForm(form)
+        );
         return this;
     }
 
@@ -65,8 +72,8 @@ public class FormBuilder {
      * @param value the value to blacklist
      * @return itself
      */
-    public FormBuilder without(String field, RecordEntry value) {
-        this.form.add(NamedRecord.of(field, new NotEntry().setEntry(value)));
+    public <T> FormBuilder without(FieldDefinition<T> field, T value) {
+        this.form.add(new SearchRequirement.NotSearch().setRecord(field.create(value)));
         return this;
     }
 
@@ -108,7 +115,7 @@ public class FormBuilder {
      * Gets the form in a string array. Returns {@link #form} as {@link List#toArray(Object[])}
      * @return a string array representing this form.
      */
-    public NamedRecord[] getForm() {
-        return this.form.toArray(new NamedRecord[0]);
+    public SearchRequirement[] getForm() {
+        return this.form.toArray(new SearchRequirement[0]);
     }
 }

@@ -2,7 +2,6 @@ package com.wynprice.cafedafydd.client.utils;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import lombok.extern.log4j.Log4j2;
 
 /**
  * A util class for javafx

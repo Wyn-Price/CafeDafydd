@@ -1,14 +1,13 @@
 package com.wynprice.cafedafydd.server.database;
 
+import com.wynprice.cafedafydd.common.FieldDefinition;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
-import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.server.PermissionLevel;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Optional;
 
-import static com.wynprice.cafedafydd.common.DatabaseStrings.*;
-import static com.wynprice.cafedafydd.common.RecordEntry.stringRecord;
+import static com.wynprice.cafedafydd.common.FieldDefinitions.*;
 
 /**
  * All the database implementations
@@ -35,10 +34,10 @@ public abstract class Databases {
         private UserDatabase() {
             //If the admin credentials don't exist, generate them. (MAYBE THROW AN ERROR OR SOMETHING?)
             if(!this.generateIfNotPresent(
-                NamedRecord.of(Users.USERNAME, stringRecord(ADMIN_USERNAME)),
-                NamedRecord.of(Users.PASSWORD_HASH, stringRecord(ADMIN_PASSWORD_HASH)),
-                NamedRecord.of(Users.PERMISSION_LEVEL, stringRecord(PermissionLevel.ADMINISTRATOR.name())),
-                NamedRecord.of(Users.EMAIL, stringRecord(ADMIN_EMAIL)))) {
+                Users.USERNAME.create(ADMIN_USERNAME),
+               Users.PASSWORD_HASH.create(ADMIN_PASSWORD_HASH),
+               Users.PERMISSION_LEVEL.create(PermissionLevel.ADMINISTRATOR.name()),
+               Users.EMAIL.create(ADMIN_EMAIL))) {
                 this.writeToFile();
             }
         }
@@ -49,23 +48,23 @@ public abstract class Databases {
         }
 
         @Override
-        protected Field[] getDefinition() {
-            return new Field[] {
-                Field.of(Users.USERNAME, RecordType.STRING),
-                Field.of(Users.PASSWORD_HASH, RecordType.STRING),
-                Field.of(Users.PERMISSION_LEVEL, RecordType.STRING),
-                Field.of(Users.EMAIL, RecordType.STRING)
+        public FieldDefinition[] createDefinition() {
+            return new FieldDefinition[] {
+                Users.USERNAME,
+                Users.PASSWORD_HASH,
+                Users.PERMISSION_LEVEL,
+                Users.EMAIL
             };
         }
 
         @Override
-        public String[] getPrimaryFields() {
-            return new String[] { Users.USERNAME, Users.EMAIL };
+        public FieldDefinition[] getPrimaryFields() {
+            return new FieldDefinition[] { Users.USERNAME, Users.EMAIL };
         }
 
         @Override
         public boolean canEdit(DatabaseRecord record, int userID, PermissionLevel level) {
-            return PermissionLevel.getLevel(record.getField(Users.PERMISSION_LEVEL).getAsString()).getPermIndex() < level.getPermIndex() || level == PermissionLevel.ADMINISTRATOR;
+            return PermissionLevel.getLevel(record.get(Users.PERMISSION_LEVEL)).getPermIndex() < level.getPermIndex() || level == PermissionLevel.ADMINISTRATOR;
         }
     }
 
@@ -77,20 +76,15 @@ public abstract class Databases {
         }
 
         @Override
-        protected Field[] getDefinition() {
-            return new Field[] {
-                Field.of(Sessions.USER_ID, RecordType.INTEGER),
-                Field.of(Sessions.COMPUTER_ID, RecordType.INTEGER),
-                Field.of(Sessions.ISO8601_START, RecordType.DATE),
-                Field.of(Sessions.ISO8601_END, RecordType.DATE),
-                Field.of(Sessions.CALCULATED_PRICE, RecordType.FLOAT),
-                Field.of(Sessions.PAID, RecordType.BOOLEAN),
+        protected FieldDefinition[] createDefinition() {
+            return new FieldDefinition[] {
+                Sessions.USER_ID,
+                Sessions.COMPUTER_ID,
+                Sessions.ISO8601_START,
+                Sessions.ISO8601_END,
+                Sessions.CALCULATED_PRICE,
+                Sessions.PAID
             };
-        }
-
-        @Override
-        public String[] getPrimaryFields() {
-            return new String[0];
         }
 
         @Override
@@ -100,7 +94,7 @@ public abstract class Databases {
 
         @Override
         public boolean canRead(DatabaseRecord record, int userID, PermissionLevel level) {
-            return record.getField(Sessions.USER_ID).getAsInt() == userID || level.getPermIndex() >= PermissionLevel.STAFF_MEMBER.getPermIndex();
+            return record.get(Sessions.USER_ID) == userID || level.getPermIndex() >= PermissionLevel.STAFF_MEMBER.getPermIndex();
         }
     }
 
@@ -112,12 +106,12 @@ public abstract class Databases {
         }
 
         @Override
-        protected Field[] getDefinition() {
-            return new Field[] {
-                Field.of(Computers.OS, RecordType.STRING),
-                Field.of(Computers.SESSION_ID, RecordType.INTEGER),
-                Field.of(Computers.PRICE_PER_HOUR, RecordType.FLOAT),
-                Field.of(Computers.INSTALLED_GAMES, RecordType.ARRAY.apply(RecordType.INTEGER))
+        protected FieldDefinition[] createDefinition() {
+            return new FieldDefinition[] {
+                Computers.OS,
+                Computers.SESSION_ID,
+                Computers.PRICE_PER_HOUR,
+                Computers.INSTALLED_GAMES
             };
         }
 
@@ -140,10 +134,10 @@ public abstract class Databases {
         }
 
         @Override
-        protected Field[] getDefinition() {
-            return new Field[] {
-                Field.of(Games.GAME_NAME, RecordType.STRING),
-                Field.of(Games.GAME_RATING, RecordType.STRING),
+        protected FieldDefinition[] createDefinition() {
+            return new FieldDefinition[] {
+                Games.GAME_NAME,
+                Games.GAME_RATING,
             };
         }
 

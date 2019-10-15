@@ -3,9 +3,7 @@ package com.wynprice.cafedafydd.client.controllers;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.common.Page;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketCreateUser;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import org.apache.logging.log4j.util.TriConsumer;
 
 /**
  * The controller for the page {@code administrator_page.fxml}

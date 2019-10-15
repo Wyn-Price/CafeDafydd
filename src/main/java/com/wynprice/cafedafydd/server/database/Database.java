@@ -1,16 +1,13 @@
 package com.wynprice.cafedafydd.server.database;
 
-import com.wynprice.cafedafydd.common.DatabaseStrings;
-import com.wynprice.cafedafydd.common.RecordEntry;
-import com.wynprice.cafedafydd.common.entries.InlineEntry;
-import com.wynprice.cafedafydd.common.entries.NotEntry;
+import com.wynprice.cafedafydd.common.*;
+import com.wynprice.cafedafydd.common.search.SearchRequirement;
 import com.wynprice.cafedafydd.common.utils.ArrayUtils;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.common.utils.UtilCollectors;
 import com.wynprice.cafedafydd.server.PermissionLevel;
 import com.wynprice.cafedafydd.server.utils.Algorithms;
-import lombok.Data;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -19,7 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -31,12 +28,7 @@ public abstract class Database {
     private static final String ID = "id";
 
     @Getter
-    private final DatabaseDefinition schema;
-
-    /**
-     * This is the list of fields in the database, and is the first line of the csv file
-     */
-    private final List<String> fields;
+    private final FieldDefinition[] definitions;
 
     /**
      * The path to this database file
@@ -49,9 +41,9 @@ public abstract class Database {
     private final List<DatabaseRecord> entries = new ArrayList<>();
 
     /**
-     * This is the list of {@link #fields} to the list of database records, sorted by the specified field.
+     * This is the list of {@link #entries} to the list of database records, sorted by the specified field.
      */
-    private final Map<String, List<DatabaseRecord>> indexedRecords = new HashMap<>();
+    private final Map<FieldDefinition, List<DatabaseRecord>> indexedRecords = new HashMap<>();
 
     /**
      * Used for handling database backups
@@ -62,11 +54,8 @@ public abstract class Database {
     Database() {
         this.backupHandler = new DatabaseBackup(this);
         //Set and check the fields and path
-        Field[] pairs = this.getDefinition();
-        this.fields = Arrays.stream(pairs).map(Field::getFieldName).collect(Collectors.toList());
-        this.schema = DatabaseDefinition.of(Arrays.stream(pairs).map(Field::getEntry).toArray(RecordType[]::new));
-
-        if(this.fields.isEmpty()) {
+        this.definitions = this.createDefinition();
+        if(this.definitions.length == 0) {
             throw new IllegalArgumentException("Need to specify the at least one field");
         }
 
@@ -101,28 +90,29 @@ public abstract class Database {
 
     /**
      * Resorts everything in {@link #indexedRecords}. Should be called sparingly.
-     * When possible call {@link #reindexRecord(DatabaseRecord)} or {@link #reindexEntryField(DatabaseRecord, String)}
+     * When possible call {@link #reindexRecord(DatabaseRecord)} or {@link #reindexEntryField(DatabaseRecord, FieldDefinition)}}
      * @see #indexedRecords
      */
     private void reindexAll() {
         //TODO: maybe don't use this ever, and instead insert when the file is being loaded.
-        for (String field : this.fields) {
-            this.indexedRecords.put(field, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> r.getField(field).getCompareString())));
+        for (FieldDefinition<?> definition : this.definitions) {
+            this.indexedRecords.put(definition, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> definition.getResult(r, RecordType::getCompareString))));
         }
-        this.indexedRecords.put(DatabaseStrings.ID, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> String.valueOf(r.getPrimaryField()))));
+        this.indexedRecords.put(FieldDefinitions.ID, Algorithms.quickSort(new ArrayList<>(this.entries), Comparator.comparing(r -> String.valueOf(r.getPrimaryField()))));
     }
 
     /**
-     * Resorts all the fields in the specified {@code record}. If possible, {@link #reindexEntryField(DatabaseRecord, String)} should be called.
+     * Resorts all the fields in the specified {@code record}. If possible, {@link #reindexEntryField(DatabaseRecord, FieldDefinition)} should be called.
      * @param record the record to resort.
      * @see #indexedRecords
      */
     private void reindexRecord(DatabaseRecord record) {
-        for (String field : this.fields) {
-            this.reindexEntryField(record, field);
+        for (FieldDefinition<?> definition : this.definitions) {
+            this.reindexEntryField(record, definition);
+
         }
 
-        List<DatabaseRecord> list = this.indexedRecords.get(DatabaseStrings.ID);
+        List<DatabaseRecord> list = this.indexedRecords.get(FieldDefinitions.ID);
         list.remove(record);
         Algorithms.insert(list, record, Comparator.comparing(r -> String.valueOf(r.getPrimaryField())));
     }
@@ -130,14 +120,14 @@ public abstract class Database {
     /**
      * Resorts only the specified {@code field} in the record {@code record}.
      * @param record The record of which should be resorted.
-     * @param field the field to resort.
+     * @param definition the definition to re-sort.
      * @see #indexedRecords
      */
-    void reindexEntryField(DatabaseRecord record, String field) {
+    <T> void reindexEntryField(DatabaseRecord record, FieldDefinition<T> definition) {
         //Remove the record from the indexed records and insert it
-        List<DatabaseRecord> list = this.indexedRecords.get(field);
+        List<DatabaseRecord> list = this.indexedRecords.get(definition);
         list.remove(record);
-        Algorithms.insert(list, record, Comparator.comparing(r -> r.getField(field).getCompareString()));
+        Algorithms.insert(list, record, Comparator.comparing(r -> definition.getResult(r, RecordType::getCompareString)));
     }
 
     /**
@@ -147,24 +137,39 @@ public abstract class Database {
      */
     private void parseLine(String line, List<String> fileFields) {
         //The entries that have been read
-        RecordEntry[] rawEntries = this.schema.parseLine(line);
-        RecordEntry[] readEntries = new RecordEntry[this.fields.size()];
+        FileLineReader reader = new FileLineReader(line);
 
-        for (String field : this.fields) {
-            int fieldIndex = this.fields.indexOf(field);
-            if(fileFields.contains(field)) { //The field is set in the database
-                readEntries[fieldIndex] = rawEntries[fileFields.indexOf(field)];
-            } else { //The field is not set in the database, and we need to generate an empty one
-                readEntries[fieldIndex] = this.schema.getEntries()[fieldIndex + 1/*+1 to allow for ID to be at index 0*/].getEntry(null);
+        int id = RecordType.INTEGER_TYPE.parseFromFile(reader).getData();
+
+        DatabaseField[] rawEntries = Arrays.stream(this.definitions).map(d -> d.getRecordType().parseFromFile(reader)).toArray(DatabaseField[]::new);
+        DatabaseField[] readEntries = new DatabaseField[this.definitions.length];
+
+        for (int i = 0; i < this.definitions.length; i++) {
+            FieldDefinition definition = this.definitions[i];
+            if(fileFields.contains(definition.getFieldName())) {
+                readEntries[i] = rawEntries[fileFields.indexOf(definition.getFieldName()) - 1];
+            } else {
+                readEntries[i] = definition.getRecordType().createEmpty();
             }
         }
 
         //Get the index of the parsed line, check for duplicate entries, and if none are found add a new record to the entries list
-        int id = rawEntries[fileFields.indexOf(ID)].getAsInt();
         if(this.checkDuplicates(readEntries, id)) {
             return;
         }
         this.entries.add(new ObservedDatabaseRecord(this, id, readEntries));
+    }
+
+    public int indexOf(FieldDefinition<?> definition) {
+        return IntStream.range(0, this.definitions.length).filter(i -> this.definitions[i] == definition).findAny().orElseThrow(() -> new IllegalArgumentException("Unable to find primary field " + definition + " in definition " + Arrays.toString(this.definitions)));
+    }
+
+    public FieldDefinition getForName(String fieldName) {
+        return Arrays.stream(this.definitions).filter(d -> d.getFieldName().equals(fieldName)).findAny().orElseThrow(() -> new IllegalArgumentException("Unable to find definition " + fieldName + " in database with definitions: " + Arrays.toString(this.definitions)));
+    }
+
+    private int indexOf(NamedRecord[] form, FieldDefinition<?> definition) {
+        return IntStream.range(0, form.length).filter(i -> form[i].getDefinition() == definition).findAny().orElse(-1);
     }
 
     /**CALCULATED_PRICE
@@ -173,16 +178,15 @@ public abstract class Database {
      * @param id the id of the read entry
      * @return true if there are duplicates found, false otherwise.
      */
-    private boolean checkDuplicates(RecordEntry[] readEntries, int id) {
+    private boolean checkDuplicates(DatabaseField[] readEntries, int id) {
         //Check duplicates using the primary fields.
-        for (String field : this.getPrimaryFields()) {
-            int index = this.fields.indexOf(field);
-
+        for (FieldDefinition<?> definition : this.getPrimaryFields()) {
+            int index = this.indexOf(definition);
             //Search for any entry that has been set with the same value in the same field as the parsed entry.
             //This means that there are conflicting primary fields.
-            Optional<RecordEntry[]> foundMatched = this.entries.stream().map(DatabaseRecord::getEntries).filter(a -> a[index].equals(readEntries[index])).findAny();
+            Optional<NamedRecord[]> foundMatched = this.entries.stream().map(DatabaseRecord::getEntries).filter(a -> a[index].getRecord().getData().equals(readEntries[index].getData())).findAny();
             if(foundMatched.isPresent()) {
-                log.error("Found multiple entries with the same primary field {}: '{}' in file {}. Aborting found entry. Existing entry :{}, found entry {}", field, readEntries[index], this.path, Arrays.toString(foundMatched.get()), Arrays.toString(readEntries));
+                log.error("Found multiple entries with the same primary field {}: '{}' in file {}. Aborting found entry. Existing entry :{}, found entry {}", definition, readEntries[index], this.path, Arrays.toString(foundMatched.get()), Arrays.toString(readEntries));
                 return true;
             }
         }
@@ -202,7 +206,7 @@ public abstract class Database {
      * @return the optional containing the found record, or {@link Optional#empty()} if none could be found.
      */
     public Optional<DatabaseRecord> getEntryFromId(int id) {
-        return Algorithms.doMappedSearch(this.indexedRecords.get(DatabaseStrings.ID), DatabaseRecord::getPrimaryField, id, Comparator.comparing(String::valueOf));
+        return Algorithms.doMappedSearch(this.indexedRecords.get(FieldDefinitions.ID), DatabaseRecord::getPrimaryField, id, Comparator.comparing(String::valueOf));
     }
 
     /**
@@ -211,8 +215,8 @@ public abstract class Database {
      * @return the stream of found entries.
      * @see com.wynprice.cafedafydd.common.utils.FormBuilder
      */
-    public Stream<DatabaseRecord> searchEntries(NamedRecord... form) {
-        return this.streamEntries((o1, o2) -> o2.getCompareString().startsWith(o1.getCompareString()) ? 0 : o1.getCompareString().compareTo(o2.getCompareString()), form);
+    public Stream<DatabaseRecord> searchEntries(SearchRequirement... form) {
+        return this.streamEntries((o1, o2) -> o2.startsWith(o1) ? 0 : o1.compareTo(o2), form);
     }
 
     /**
@@ -221,8 +225,8 @@ public abstract class Database {
      * @return the stream of found entries.
      * @see com.wynprice.cafedafydd.common.utils.FormBuilder
      */
-    public Stream<DatabaseRecord> getEntries(NamedRecord... form) {
-        return this.streamEntries(Comparator.comparing(RecordEntry::getCompareString), form);
+    public Stream<DatabaseRecord> getEntries(SearchRequirement... form) {
+        return this.streamEntries(String::compareTo, form);
     }
 
     /**
@@ -231,7 +235,7 @@ public abstract class Database {
      * @param form the form to search with.
      * @return the resulting stream from the found entries.
      */
-    private Stream<DatabaseRecord> streamEntries(Comparator<RecordEntry> comparator, NamedRecord... form) {
+    private Stream<DatabaseRecord> streamEntries(Comparator<String> comparator, SearchRequirement... form) {
         if(this.entries.isEmpty() ) {
             return Stream.empty();
         }
@@ -239,37 +243,47 @@ public abstract class Database {
             return this.entries.stream();
         }
         List<DatabaseRecord> list = new ArrayList<>(this.entries);
-        for(NamedRecord record : form) {
+        for(SearchRequirement requirement : form) {
             //If the form object equals NOT_PREFIX, then invert the search and move the index along to the nextChar position.
             boolean inverted = false;
 
-            String field = record.getField();
-            RecordEntry formValue = record.getRecord();
+            FieldDefinition<?> field;
+            DatabaseField<?> value;
 
-            if(formValue instanceof NotEntry) {
-                inverted = true;
-                formValue = ((NotEntry)formValue).getEntry();
+
+            switch (requirement.id()) {
+                case 1:
+                    inverted = true;
+                case 0:
+                    NamedRecord record = requirement instanceof NamedRecord ? (NamedRecord) requirement : ((SearchRequirement.DirectSearch) requirement).getRecord();
+                    field = record.getDefinition();
+                    value = record.getRecord();
+                    break;
+
+                case 2:
+                    SearchRequirement.InlineSearch inline = (SearchRequirement.InlineSearch) requirement;
+                    field = inline.getDefinition();
+                    Optional<DatabaseField> databaseField = Databases.getFromFile(inline.getRequestDatabase())
+                        .flatMap(d -> d.streamEntries(comparator, inline.getForm()).collect(UtilCollectors.toSingleEntry()))
+                        .map(r -> r.getRawField(inline.getRequestDatabaseField()));
+                    if(databaseField.isPresent()) {
+                        value = databaseField.get();
+                    } else {
+                        return Stream.empty();
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Don't know how to handle search requirement of id " + requirement.id());
             }
+
             //Damn you lambda statements
             boolean finalInverted = inverted;
-
-            if(formValue instanceof InlineEntry) {
-                InlineEntry value = (InlineEntry) formValue;
-                Optional<RecordEntry> optional = Databases.getFromFile(value.getRequestDatabase())
-                    .flatMap(d -> d.streamEntries(comparator, value.getForm()).collect(UtilCollectors.toSingleEntry()))
-                    .map(r -> r.getField(value.getRequestDatabaseField()));
-                if(optional.isPresent()) {
-                    formValue = optional.get();
-                } else {
-                    return Stream.empty();
-                }
-            }
-
 
             //Get the found entries for this section of the form, and then go through the current list
             //and if the form entry is inverted, removed them if the found entries contains the entry, otherwise
             //remove the element if the found entries doesn't contain it.
-            List<DatabaseRecord> foundRecords = Algorithms.splicedBinarySearch(this.indexedRecords.get(field), r -> r.getField(field), formValue, comparator);
+
+            List<DatabaseRecord> foundRecords = Algorithms.splicedBinarySearch(this.indexedRecords.get(field), r -> r.getRawField(field), value, (o1, o2) -> comparator.compare(o1.getAsCompareString(), o2.getAsCompareString()));
             list.removeIf(r -> finalInverted == foundRecords.contains(r));
         }
         return list.stream();
@@ -283,21 +297,22 @@ public abstract class Database {
      */
     public DatabaseRecord generateAndAddDatabase(NamedRecord... form) {
         //Create the new backing array and get the current maximum id + 1. TODO: maybe get the lowest available id, instead of the max + 1
-        RecordEntry[] entry = new RecordEntry[this.fields.size()];
+        DatabaseField[] entry = new DatabaseField[this.definitions.length];
         int newId = this.entries.stream().map(DatabaseRecord::getPrimaryField).mapToInt(i -> i).max().orElse(0) + 1;
+
 
         //Go through all the form entries and set the fields in the entry to be the field value.
         //The indexOf stuff is to ensure that it all gets put in the right place, as the input form
         //doesn't necessarily have to be in the same order as the actual fields.
-        for (NamedRecord record : form) {
-            entry[this.fields.indexOf(record.getField())] = record.getRecord();
-        }
-
-        //If any of the entries haven't been set then just set them to an empty string
-        for (int i = 0; i < entry.length; i++) {
-            if(entry[i] == null) {
-                entry[i] = this.schema.getEntries()[i + 1].getEntry(null);
+        for (int i = 0; i < this.definitions.length; i++) {
+            int index = this.indexOf(form, this.definitions[i]);
+            if(index >= 0) {
+                entry[i] = form[index].getRecord();
+            } else {
+                //If any of the entries haven't been set then just set them to an empty string
+                entry[i] = this.definitions[i].getRecordType().createEmpty();
             }
+
         }
 
 
@@ -316,10 +331,10 @@ public abstract class Database {
      */
     public boolean removeEntry(DatabaseRecord record) {
         boolean ret = this.entries.remove(record);
-        for (String field : this.fields) {
-            this.indexedRecords.get(field).remove(record);
+        for (FieldDefinition definition : this.definitions) {
+            this.indexedRecords.get(definition).remove(record);
         }
-        this.indexedRecords.get(DatabaseStrings.ID).remove(record);
+        this.indexedRecords.get(FieldDefinitions.ID).remove(record);
         this.writeToFile();
         return ret;
     }
@@ -329,7 +344,7 @@ public abstract class Database {
      * @param form the form to search for
      * @return true if there is at least one entry that matches the form, false otherwise
      */
-    public boolean hasAllEntries(NamedRecord... form) {
+    public boolean hasAllEntries(SearchRequirement... form) {
         return this.getEntries(form).count() > 0;
     }
 
@@ -376,14 +391,11 @@ public abstract class Database {
      */
     public List<String> getFileGeneratedList() {
         List<String> lines = new ArrayList<>();
-        lines.add(ID + "," + String.join(",", this.fields));
+        lines.add(ID + "," + String.join(",", () -> Arrays.stream(this.definitions).map(d -> (CharSequence) d.getFieldName()).iterator()));
         this.entries.stream().map(DatabaseRecord::toFileString).forEach(lines::add);
         return lines;
     }
 
-    public List<String> getFieldList() {
-        return this.fields;
-    }
 
     /**
      * Gets the read level for this database
@@ -431,19 +443,14 @@ public abstract class Database {
     /**
      * @return the definition of field names to schema types for this database.
      */
-    protected abstract Field[] getDefinition();
+    protected abstract FieldDefinition[] createDefinition();
 
     /**
      * @return the primary fields for this database. These fields are the ones that MUST have unique values.
      * NOTE ID is already included in this.
      */
-    public String[] getPrimaryFields() {
-        return new String[0];
+    public FieldDefinition[] getPrimaryFields() {
+        return new FieldDefinition[0];
     }
 
-    @Data(staticConstructor = "of")
-    public static class Field {
-        private final String fieldName;
-        private final RecordType entry;
-    }
 }

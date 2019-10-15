@@ -55,10 +55,10 @@ public class ClientNetworkHandler extends NetworkHandler {
         //Handle the received database request result
         switch (packet.getType()) {
             case GET:
-                DatabaseRequest.GET_ENTRIES.receive(packet.getRequestID(), packet.getRecords());
+                DatabaseRequest.GET_ENTRIES.receive(packet.getRequestID(), packet.getEntries());
                 break;
             case SEARCH:
-                DatabaseRequest.SEARCH_ENTRIES.receive(packet.getRequestID(), packet.getRecords());
+                DatabaseRequest.SEARCH_ENTRIES.receive(packet.getRequestID(), packet.getEntries());
                 break;
         }
     }

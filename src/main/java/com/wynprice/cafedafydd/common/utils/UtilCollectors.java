@@ -11,7 +11,6 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Stream;
 
 /**
  * A util class containing the collectors used to collect streams.
@@ -29,6 +28,15 @@ public class UtilCollectors {
             StringBuilder::append,
             StringBuilder::append,
             StringBuilder::toString
+        );
+    }
+
+    public static <T, K, V> Collector<T, Map<K, V>, Map<K, V>> toHashMap(Function<T, K> keyGetter, Function<T, V> valueGetter) {
+        return new CollectorImpl<>(
+            HashMap::new,
+            (map, t) -> map.put(keyGetter.apply(t), valueGetter.apply(t)),
+            (map1, map2) -> { map1.putAll(map2); return map1; },
+            map -> map
         );
     }
 

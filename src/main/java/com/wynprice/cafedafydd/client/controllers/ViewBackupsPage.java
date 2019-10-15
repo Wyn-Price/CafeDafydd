@@ -6,7 +6,6 @@ import com.wynprice.cafedafydd.common.BackupHeader;
 import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketRevertDatabase;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;

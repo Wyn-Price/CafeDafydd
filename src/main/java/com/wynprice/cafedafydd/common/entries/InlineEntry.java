@@ -1,8 +1,8 @@
 package com.wynprice.cafedafydd.common.entries;
 
+import com.wynprice.cafedafydd.common.RecordEntry;
 import com.wynprice.cafedafydd.common.utils.ByteBufUtils;
 import com.wynprice.cafedafydd.common.utils.NamedRecord;
-import com.wynprice.cafedafydd.common.RecordEntry;
 import io.netty.buffer.ByteBuf;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,7 +26,7 @@ public class InlineEntry implements RecordEntry {
     public InlineEntry deserialize(ByteBuf buf) {
         this.requestDatabase = ByteBufUtils.readString(buf);
         this.requestDatabaseField = ByteBufUtils.readString(buf);
-        this.form = NamedRecord.read(buf);
+        this.form = NamedRecord.read(buf, this.requestDatabase);
         return this;
     }
 

@@ -1,12 +1,15 @@
 package com.wynprice.cafedafydd.common.netty.packets.clientbound;
 
+import com.wynprice.cafedafydd.common.DatabaseField;
+import com.wynprice.cafedafydd.common.FieldDefinitions;
 import com.wynprice.cafedafydd.common.utils.ByteBufUtils;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import com.wynprice.cafedafydd.common.utils.RequestType;
-import com.wynprice.cafedafydd.common.RecordEntry;
 import io.netty.buffer.ByteBuf;
 import lombok.Value;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -15,45 +18,39 @@ import java.util.stream.IntStream;
 public class PacketDatabaseEntriesResult {
     private final RequestType type;
     private final int requestID;
-    private final List<String> fields;
-    private final List<DatabaseRecord> records;
+    private final String database;
+    private final List<DatabaseRecord> entries;
 
     public static void encode(PacketDatabaseEntriesResult packet, ByteBuf buf) {
         buf.writeShort(packet.type.ordinal());
         buf.writeInt(packet.requestID);
-        buf.writeShort(packet.fields.size());
+        ByteBufUtils.writeString(packet.database, buf);
 
-        for (String field : packet.fields) {
-            ByteBufUtils.writeString(field, buf);
-        }
+        buf.writeShort(packet.entries.size());
 
-        buf.writeShort(packet.records.size());
-        for (DatabaseRecord record : packet.records) {
-            buf.writeInt(record.getPrimaryField());
-            for (RecordEntry entry : record.getEntries()) {
-                buf.writeByte(entry.getId());
-                entry.serialize(buf);
+        for (DatabaseRecord entry : packet.entries) {
+            buf.writeInt(entry.getPrimaryField());
+            for (NamedRecord entryEntry : entry.getEntries()) {
+                entryEntry.getRecord().serialize(buf);
             }
         }
     }
 
     public static PacketDatabaseEntriesResult decode(ByteBuf buf) {
-        RequestType type = RequestType.values()[buf.readShort() % RequestType.values().length];
-
-        int requestId = buf.readInt();
-        List<String> fields = IntStream.range(0, buf.readShort())
-            .mapToObj($ -> ByteBufUtils.readString(buf))
-            .collect(Collectors.toList());
-
-        List<DatabaseRecord> records = IntStream.range(0, buf.readShort())
-            .mapToObj($ ->
-                new DatabaseRecord(fields, buf.readInt(),
-                    IntStream.range(0, fields.size())
-                        .mapToObj($$ -> RecordEntry.createNew(buf.readByte()).deserialize(buf))
-                        .toArray(RecordEntry[]::new)
-                )
-            ).collect(Collectors.toList());
-        return new PacketDatabaseEntriesResult(type, requestId, fields, records);
+        String database;
+        return new PacketDatabaseEntriesResult(
+            RequestType.values()[buf.readShort() % RequestType.values().length],
+            buf.readInt(),
+            database = ByteBufUtils.readString(buf),
+            IntStream.range(0, buf.readShort())
+                .mapToObj(value ->
+                    new DatabaseRecord(
+                        buf.readInt(),
+                        FieldDefinitions.NAME_TO_SCHEMA.get(database),
+                        Arrays.stream(FieldDefinitions.NAME_TO_SCHEMA.get(database)).map(definition -> definition.getRecordType().createEmpty().deserialize(buf)).toArray(DatabaseField[]::new)
+                    )
+                ).collect(Collectors.toList())
+        );
 
     }
 

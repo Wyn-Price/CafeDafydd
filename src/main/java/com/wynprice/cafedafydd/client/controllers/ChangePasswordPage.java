@@ -4,7 +4,10 @@ import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.utils.FXUtils;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketChangePassword;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 
 import static com.wynprice.cafedafydd.common.utils.PasswordUtils.generatePasswordHash;
 

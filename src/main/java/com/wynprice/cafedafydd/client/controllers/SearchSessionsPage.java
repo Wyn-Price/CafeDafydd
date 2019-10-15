@@ -5,6 +5,7 @@ import com.wynprice.cafedafydd.client.controllers.data.Session;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketTryEditDatabase;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
+import com.wynprice.cafedafydd.common.utils.DateUtils;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -13,8 +14,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 
-import static com.wynprice.cafedafydd.common.DatabaseStrings.*;
-import static com.wynprice.cafedafydd.common.RecordEntry.*;
+import static com.wynprice.cafedafydd.common.FieldDefinitions.*;
 
 public class SearchSessionsPage implements BaseController {
     @FXML public Button backButton;
@@ -57,7 +57,7 @@ public class SearchSessionsPage implements BaseController {
             FormBuilder form = FormBuilder.create();
 
             if(!this.usernameText.getText().isEmpty()) {
-                form.withInline(Sessions.USER_ID, Users.FILE_NAME, ID, FormBuilder.create().with(Users.USERNAME, stringRecord(this.usernameText.getText())).getForm());
+                form.withInline(Sessions.USER_ID, Users.FILE_NAME, ID, FormBuilder.create().with(Users.USERNAME, this.usernameText.getText()).getForm());
             }
             if(this.paidStateBox.getSelectionModel().getSelectedIndex() > 0) {
                 // 0 -> null
@@ -67,13 +67,13 @@ public class SearchSessionsPage implements BaseController {
 
                 switch (this.paidStateBox.getSelectionModel().getSelectedIndex()) {
                     case 1:
-                        form.with(Sessions.ISO8601_END, dateRecord(Sessions.HASNT_ENDED));
+                        form.with(Sessions.ISO8601_END, DateUtils.EMPTY_DATE);
                         break;
                     case 2:
-                        form.with(Sessions.PAID, boolRecord(true));
+                        form.with(Sessions.PAID, true);
                         break;
                     case 3:
-                        form.with(Sessions.PAID, boolRecord(false));
+                        form.with(Sessions.PAID, false);
                         break;
                 }
             }
@@ -97,10 +97,10 @@ public class SearchSessionsPage implements BaseController {
         if(item != null) {
             if(item.isHasPaid()) {
                 //Set unpaid
-                CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Sessions.FILE_NAME, item.getFieldID(), FormBuilder.create().with(Sessions.PAID, boolRecord(false)).getForm()));
+                CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Sessions.FILE_NAME, item.getFieldID(), FormBuilder.create().with(Sessions.PAID, false).getForm()));
             } else {
                 //Set paid
-                CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Sessions.FILE_NAME, item.getFieldID(), FormBuilder.create().with(Sessions.PAID, boolRecord(true)).getForm()));
+                CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Sessions.FILE_NAME, item.getFieldID(), FormBuilder.create().with(Sessions.PAID, true).getForm()));
             }
         }
     }
