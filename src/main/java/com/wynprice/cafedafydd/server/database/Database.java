@@ -60,7 +60,6 @@ public abstract class Database {
         }
 
         this.path = Paths.get("databases").resolve(this.getFilename() + ".csv");
-
         //If the file exists try and load from it. Save the file then to ensure the file exists
         if(this.path.toFile().exists()) {
             try {
@@ -320,6 +319,7 @@ public abstract class Database {
         DatabaseRecord newEntry = new ObservedDatabaseRecord(this, newId, entry);
         this.entries.add(newEntry);
         this.reindexRecord(newEntry);
+        this.backupHandler.onChanged();
         this.writeToFile();
         return newEntry;
     }
@@ -335,6 +335,7 @@ public abstract class Database {
             this.indexedRecords.get(definition).remove(record);
         }
         this.indexedRecords.get(FieldDefinitions.ID).remove(record);
+        this.backupHandler.onChanged();
         this.writeToFile();
         return ret;
     }
@@ -366,7 +367,7 @@ public abstract class Database {
      * @see DatabaseRecord#toFileString()
      */
     public void writeToFile() {
-        this.backupHandler.onChanged();
+        this.backupHandler.onWritten();
         //If the file parent doesn't exist, try and generate the parent folders and log if an error occurs.
         if(Files.notExists(this.path.getParent())) {
             try {

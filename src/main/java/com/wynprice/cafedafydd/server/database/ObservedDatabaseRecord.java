@@ -25,6 +25,7 @@ public class ObservedDatabaseRecord extends DatabaseRecord {
             throw new IllegalArgumentException("Primary field '" + definition + "' with value '" + value + "' already exists in database " + this.database.getFilename());
         }
         super.set(definition, value);
+        this.database.getBackupHandler().onChanged();
         this.database.writeToFile();
         this.database.reindexEntryField(this, definition);
     }

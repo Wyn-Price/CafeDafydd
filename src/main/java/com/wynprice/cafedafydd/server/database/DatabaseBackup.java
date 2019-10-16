@@ -26,6 +26,8 @@ public class DatabaseBackup implements AutoCloseable {
 
     private long prevBackupTime;
 
+    private boolean setChanged;
+
     @Getter
     private final List<BackupHeader> headers = new LinkedList<>();
 
@@ -55,9 +57,14 @@ public class DatabaseBackup implements AutoCloseable {
     }
 
     public void onChanged() {
+        this.setChanged = true;
+    }
+
+    public void onWritten() {
         long ms = System.currentTimeMillis();
-        if(ms - this.prevBackupTime > MS_TIME_BETWEEN_BACKUPS) {
+        if(this.setChanged && ms - this.prevBackupTime > MS_TIME_BETWEEN_BACKUPS) {
             this.prevBackupTime = ms;
+            this.setChanged = false;
             try {
                 List<String> collected = this.database.getFileGeneratedList();
 

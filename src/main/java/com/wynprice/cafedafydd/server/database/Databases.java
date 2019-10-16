@@ -33,13 +33,12 @@ public abstract class Databases {
 
         private UserDatabase() {
             //If the admin credentials don't exist, generate them. (MAYBE THROW AN ERROR OR SOMETHING?)
-            if(!this.generateIfNotPresent(
+            this.generateIfNotPresent(
                 Users.USERNAME.create(ADMIN_USERNAME),
-               Users.PASSWORD_HASH.create(ADMIN_PASSWORD_HASH),
-               Users.PERMISSION_LEVEL.create(PermissionLevel.ADMINISTRATOR.name()),
-               Users.EMAIL.create(ADMIN_EMAIL))) {
-                this.writeToFile();
-            }
+                Users.PASSWORD_HASH.create(ADMIN_PASSWORD_HASH),
+                Users.PERMISSION_LEVEL.create(PermissionLevel.ADMINISTRATOR.name()),
+                Users.EMAIL.create(ADMIN_EMAIL)
+            );
         }
 
         @Override
