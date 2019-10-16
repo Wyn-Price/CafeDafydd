@@ -32,10 +32,6 @@ public class FieldDefinitions {
         public static final FieldDefinition<Boolean> PAID =  FieldDefinition.of("has_paid", BOOLEAN_TYPE);
 
         public static final FieldDefinition[] SCHEMA = { USER_ID, COMPUTER_ID, ISO8601_START, ISO8601_END, CALCULATED_PRICE, PAID };
-
-
-        //TODO: don't use
-        public static final String HASNT_ENDED = "notend";
     }
 
     public static class Computers {
