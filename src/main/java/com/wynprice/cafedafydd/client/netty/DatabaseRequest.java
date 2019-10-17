@@ -10,6 +10,7 @@ import com.wynprice.cafedafydd.common.search.SearchRequirement;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
 import com.wynprice.cafedafydd.common.utils.RequestType;
+import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -104,7 +105,7 @@ public class DatabaseRequest {
             //Get and remove the handler. If it exists, invoke it otherwise log an error.
             Consumer<D> removed = this.storage.remove(requestID);
             if(removed != null) {
-                removed.accept(value);
+                Platform.runLater(() -> removed.accept(value));
             } else {
                 log.error(new IllegalArgumentException("Could not find request with id " + requestID));
             }

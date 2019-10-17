@@ -3,7 +3,7 @@ package com.wynprice.cafedafydd.client.controllers;
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
 import com.wynprice.cafedafydd.common.BackupHeader;
-import com.wynprice.cafedafydd.common.DatabaseStrings;
+import com.wynprice.cafedafydd.common.FieldDefinitions;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketRevertDatabase;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -25,12 +25,12 @@ public class ViewBackupsPage implements BaseController {
 
     @Override
     public void onLoaded() {
-        this.databaseComboBox.getItems().addAll(DatabaseStrings.ALL_FILENAMES);
+        this.databaseComboBox.getItems().addAll(FieldDefinitions.NAME_TO_SCHEMA.keySet());
         this.databaseComboBox.valueProperty().addListener((observable, oldValue, newValue) -> this.sendHeaderRequest(newValue));
         this.headersList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 if(newValue != null) {
                     DatabaseRequest.BACKUP_ENTRIES.sendRequest(this.databaseComboBox.valueProperty().get(), list ->
-                        Platform.runLater(() -> backupEntryText.setText(String.join("\n", list))), newValue.getHeader().getId());
+                        backupEntryText.setText(String.join("\n", list)), newValue.getHeader().getId());
                 }
             }
         );
@@ -46,12 +46,12 @@ public class ViewBackupsPage implements BaseController {
     }
 
     private void sendHeaderRequest(String dbName) {
-        DatabaseRequest.BACKUP_HEADERS.sendRequest(dbName, headers -> Platform.runLater(() -> {
+        DatabaseRequest.BACKUP_HEADERS.sendRequest(dbName, headers -> {
             this.headersList.getItems().clear();
             for (BackupHeader header : headers) {
                 this.headersList.getItems().add(new BackupHeaderDelegate(header));
             }
-        }), null);
+        }, null);
     }
 
     @FXML

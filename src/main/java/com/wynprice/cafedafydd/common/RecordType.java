@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.function.Supplier;
 public class RecordType<T> {
 
     public static final RecordType<Boolean> BOOLEAN_TYPE = new RecordType<>(
+        Boolean.class,
         ByteBuf::writeBoolean,
         ByteBuf::readBoolean,
         String::valueOf,
@@ -28,6 +30,7 @@ public class RecordType<T> {
     );
 
     public static final RecordType<Date> DATE_TYPE = new RecordType<>(
+        Date.class,
         (buf, data) -> buf.writeLong(data.getTime()),
         buf -> new Date(buf.readLong()),
         DateUtils::toISO8691,
@@ -36,6 +39,7 @@ public class RecordType<T> {
     );
 
     public static final RecordType<Float> FLOAT_TYPE = new RecordType<>(
+        Float.class,
         ByteBuf::writeFloat,
         ByteBuf::readFloat,
         String::valueOf,
@@ -44,6 +48,7 @@ public class RecordType<T> {
     );
 
     public static final RecordType<Integer> INTEGER_TYPE = new RecordType<>(
+        Integer.class,
         ByteBuf::writeInt,
         ByteBuf::readInt,
         String::valueOf,
@@ -52,6 +57,7 @@ public class RecordType<T> {
     );
 
     public static final RecordType<String> STRING_TYPE = new RecordType<>(
+        String.class,
         ByteBufUtils::writeString,
         ByteBufUtils::readString,
         s -> s,
@@ -61,14 +67,15 @@ public class RecordType<T> {
 
     @SuppressWarnings("unchecked")
     public static <T> RecordType<T[]> createArray(RecordType<T> arrayType) {
-        return new RecordType<>((buf, ts) -> {
+        T[] emptyArr = (T[]) Array.newInstance(arrayType.backingClazz, 0);
+        return new RecordType<>((Class<T[]>) emptyArr.getClass(), (buf, ts) -> {
             buf.writeShort(ts.length);
             for (T t : ts) {
                 arrayType.serializer.accept(buf, t);
             }
         }, buf -> {
             short len = buf.readShort();
-            T[] arr = (T[]) new Object[len];
+            T[] arr = (T[]) Array.newInstance(arrayType.backingClazz, len);
             for (int i = 0; i < len; i++) {
                 arr[i] = arrayType.deserializer.apply(buf);
             }
@@ -79,7 +86,7 @@ public class RecordType<T> {
             builder.append('[');
 
             for (int i = 0; i < ts.length; i++) {
-                if(i != 0) {
+                if (i != 0) {
                     builder.append(',');
                 }
                 builder.append(arrayType.getAsFileString(ts[i]));
@@ -93,11 +100,12 @@ public class RecordType<T> {
             while (lineReader.hasMore()) {
                 arr.add(arrayType.fromFile.apply(lineReader));
             }
-            return (T[]) arr.toArray();
-        }, () -> (T[]) new Object[0]);
+            return arr.toArray(emptyArr);
+        }, () -> emptyArr);
     }
 
-    public RecordType(BiConsumer<ByteBuf, T> serializer, Function<ByteBuf, T> deserializer, Function<T, CharSequence> toFileString, Function<FileLineReader, T> fromFile, Supplier<T> emptyType) {
+    public RecordType(Class<T> backingClazz, BiConsumer<ByteBuf, T> serializer, Function<ByteBuf, T> deserializer, Function<T, CharSequence> toFileString, Function<FileLineReader, T> fromFile, Supplier<T> emptyType) {
+        this.backingClazz = backingClazz;
         this.serializer = serializer;
         this.deserializer = deserializer;
         this.toFileString = toFileString;
@@ -107,6 +115,7 @@ public class RecordType<T> {
     }
 
 
+    private final Class<T> backingClazz;
     private final BiConsumer<ByteBuf, T> serializer;
     private final Function<ByteBuf, T> deserializer;
     private final Function<T, CharSequence> toFileString;
@@ -145,5 +154,10 @@ public class RecordType<T> {
         DatabaseField<T> field = this.createEmpty();
         field.setData(data);
         return field;
+    }
+
+    @Override
+    public String toString() {
+        return "RecordType: " + this.backingClazz;
     }
 }

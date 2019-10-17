@@ -61,7 +61,7 @@ public class SearchUsersPage implements BaseController {
             }
 
             DatabaseRequest.SEARCH_ENTRIES.sendRequest(Users.FILE_NAME,
-                records -> Platform.runLater(() -> { //Ensure on Java FX Thread
+                records -> {
                     this.searchResult.getItems().clear();
                     for (DatabaseRecord record : records) {
                         this.searchResult.getItems().add(new UserRecord(
@@ -73,7 +73,7 @@ public class SearchUsersPage implements BaseController {
 
                         ));
                     }
-                }),
+                },
                 form.getForm()
             );
         });

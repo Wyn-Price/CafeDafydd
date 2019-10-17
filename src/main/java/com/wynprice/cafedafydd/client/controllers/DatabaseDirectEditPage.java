@@ -2,8 +2,8 @@ package com.wynprice.cafedafydd.client.controllers;
 
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
-import com.wynprice.cafedafydd.common.DatabaseStrings;
 import com.wynprice.cafedafydd.common.FieldDefinition;
+import com.wynprice.cafedafydd.common.FieldDefinitions;
 import com.wynprice.cafedafydd.common.RecordType;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketEditDatabaseField;
 import com.wynprice.cafedafydd.common.netty.packets.serverbound.PacketEditRecordDirect;
@@ -61,7 +61,7 @@ public class DatabaseDirectEditPage implements BaseController {
         });
 
 
-        for (String file : DatabaseStrings.ALL_FILENAMES) {
+        for (String file : FieldDefinitions.NAME_TO_SCHEMA.keySet()) {
             this.databaseCombobox.getItems().add(file);
         }
         this.databaseCombobox.valueProperty().addListener((observable, oldValue, newValue) -> Platform.runLater(this::resync));
@@ -70,7 +70,7 @@ public class DatabaseDirectEditPage implements BaseController {
     @Override
     public void resync() {
         if(this.databaseCombobox.valueProperty().get() != null) {
-            DatabaseRequest.GET_ENTRIES.sendRequest(this.databaseCombobox.valueProperty().get(), records -> Platform.runLater(() -> {
+            DatabaseRequest.GET_ENTRIES.sendRequest(this.databaseCombobox.valueProperty().get(), records -> {
                 this.contents.getColumns().clear();
                 this.contents.getItems().clear();
                 boolean setHeaders = false;
@@ -102,7 +102,7 @@ public class DatabaseDirectEditPage implements BaseController {
 
                     this.contents.getItems().add(record);
                 }
-            }));
+            });
         }
     }
 

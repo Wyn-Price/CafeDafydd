@@ -50,14 +50,14 @@ public class EditUserPage implements BaseController {
                 this.errorField.setText("Username must be at least 5 characters.");
                 this.usernameImage.setImage(Images.RED_CROSS.getImage());
             } else {
-                DatabaseRequest.HAS_ENTRY.sendRequest(Users.FILE_NAME, result -> Platform.runLater(() -> {
+                DatabaseRequest.HAS_ENTRY.sendRequest(Users.FILE_NAME, result -> {
                     this.usernameImage.setImage(getImage(!result));
                     if(result) {
                         this.errorField.setText("Username is taken");
                     } else {
                         this.errorField.setText("");
                     }
-                }), FormBuilder.create().with(Users.USERNAME, newValue).without(ID, this.id));
+                }, FormBuilder.create().with(Users.USERNAME, newValue).without(ID, this.id));
             }
         });
 
@@ -67,14 +67,14 @@ public class EditUserPage implements BaseController {
                 this.errorField.setText("Invalid email");
                 this.emailImage.setImage(Images.RED_CROSS.getImage());
             } else {
-                DatabaseRequest.HAS_ENTRY.sendRequest(Users.FILE_NAME, result -> Platform.runLater(() -> {
+                DatabaseRequest.HAS_ENTRY.sendRequest(Users.FILE_NAME, result -> {
                     this.emailImage.setImage(getImage(!result));
                     if(result) {
                         this.errorField.setText("Email is already registered to an account. Contact a member of staff for a password reset");
                     } else {
                         this.errorField.setText("");
                     }
-                }), FormBuilder.create().with(Users.EMAIL, newValue).without(ID, this.id));
+                }, FormBuilder.create().with(Users.EMAIL, newValue).without(ID, this.id));
             }
         });
 

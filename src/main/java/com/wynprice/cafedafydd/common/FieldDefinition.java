@@ -4,10 +4,12 @@ import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.NamedRecord;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import java.util.function.BiFunction;
 
 @Data
+@ToString
 @RequiredArgsConstructor(staticName = "of")
 public class FieldDefinition<T> {
     private final String fieldName;

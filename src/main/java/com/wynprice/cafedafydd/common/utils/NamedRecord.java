@@ -7,12 +7,14 @@ import com.wynprice.cafedafydd.common.search.SearchRequirement;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.IntStream;
 
 @Getter
+@ToString
 @RequiredArgsConstructor(staticName = "of")
 public class NamedRecord<T> implements SearchRequirement {
     private final FieldDefinition<T> definition;

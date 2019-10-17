@@ -4,9 +4,11 @@ import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 @RequiredArgsConstructor
 public class DatabaseField<T> {
     private final RecordType<T> type;
