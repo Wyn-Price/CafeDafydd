@@ -6,7 +6,7 @@
         </Console>
         <File name="FileOut" fileName="logs/${sys:logFilename}.log">
             <PatternLayout>
-                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+                <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level]: %msg%n" />
             </PatternLayout>
         </File>
     </Appenders>

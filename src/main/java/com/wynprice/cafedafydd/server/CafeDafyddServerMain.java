@@ -11,6 +11,7 @@ import javafx.application.Application;
 import lombok.SneakyThrows;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -22,9 +23,9 @@ public class CafeDafyddServerMain {
     private static ChannelFuture endpoint;
 
     public static void main(String[] args) {
-        System.setProperty("logFilename", "server - " + DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+        System.setProperty("logFilename", "server_" + DateTimeFormatter.ofPattern("uuuu-MM-ddHH-mmss").withZone(ZoneId.of("GMT")).format(Instant.now()));
 
-        Application.launch(CafeDafyddServerApplication.class);
+        new Thread(() -> Application.launch(CafeDafyddServerApplication.class), "Server Application Launch").start();
 
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();

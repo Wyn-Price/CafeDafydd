@@ -39,8 +39,6 @@ task serverJar(type: Jar) {
     with jar
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     exclude "com/wynprice/cafedafydd/client/**"
-
-    sourceSets.main.output.forEach { }
 }
 
 artifacts {
@@ -66,7 +64,9 @@ boolean checkImport(String base, String... blacklisted) {
 }
 
 task checkAllImports () {
-    if(checkImport("common", "client", "server") | checkImport("client", "server") | checkImport("server", "client")) {
-        throw new GradleException("Blacklist Import Found. See above for details")
+    afterEvaluate {
+        if(checkImport("common", "client", "server") | checkImport("client", "server") | checkImport("server", "client")) {
+            throw new GradleException("Blacklist Import Found. See above for details")
+        }
     }
 }

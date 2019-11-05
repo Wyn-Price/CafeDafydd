@@ -36,7 +36,7 @@ public class DatabaseBackup implements AutoCloseable {
 
         this.baseFile = Paths.get("databases").resolve("backups").resolve(database.getFilename() + ".dbb").toFile();
         if(!this.baseFile.exists()) {
-            if (!this.baseFile.getParentFile().exists() && !this.baseFile.getParentFile().mkdir()) {
+            if (!this.baseFile.getParentFile().exists() && !this.baseFile.getParentFile().mkdirs()) {
                 throw new IllegalStateException("Should be able to create file at :" + this.baseFile.getParentFile().getAbsolutePath());
             }
             try {

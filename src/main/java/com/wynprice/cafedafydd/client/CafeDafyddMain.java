@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.Stack;
@@ -21,7 +22,7 @@ import java.util.Stack;
 public class CafeDafyddMain extends Application {
 
     static {
-        System.setProperty("logFilename", "client - " + DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+        System.setProperty("logFilename", "client_" + DateTimeFormatter.ofPattern("uuuu-MM-ddHH-mmss").withZone(ZoneId.of("GMT")).format(Instant.now()));
     }
 
     //Don't use @Log4j2 here, as we need to set the filename before we reference the logger

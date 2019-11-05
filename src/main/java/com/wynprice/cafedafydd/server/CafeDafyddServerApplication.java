@@ -15,6 +15,7 @@ public class CafeDafyddServerApplication extends Application {
 
     @Override
     public void stop() throws Exception {
+        CafeDafyddServerMain.close();
         System.exit(0);
     }
 }
