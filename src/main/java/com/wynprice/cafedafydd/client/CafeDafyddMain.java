@@ -62,11 +62,12 @@ public class CafeDafyddMain extends Application {
         stage.setTitle("Cafe Dafydd");
         stage.setScene(getScene(Page.LOGIN_PAGE).orElseThrow(IllegalArgumentException::new));
         stage.show();
+    }
 
-        stage.onCloseRequestProperty().set(event -> {
-            client.close();
-            System.exit(0);
-        });
+    @Override
+    public void stop() {
+        client.close();
+        System.exit(0);
     }
 
     /**
