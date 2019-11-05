@@ -2,15 +2,14 @@ package com.wynprice.cafedafydd.client.controllers;
 
 import com.wynprice.cafedafydd.client.CafeDafyddMain;
 import com.wynprice.cafedafydd.client.netty.DatabaseRequest;
+import com.wynprice.cafedafydd.client.utils.FXUtils;
 import com.wynprice.cafedafydd.client.utils.Images;
 import com.wynprice.cafedafydd.common.utils.DatabaseRecord;
 import com.wynprice.cafedafydd.common.utils.FormBuilder;
 import com.wynprice.cafedafydd.common.utils.PasswordUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
@@ -44,7 +43,6 @@ public class EditUserPage implements BaseController {
 
     @Override
     public void onLoaded() {
-        this.resync();
         this.usernameField.textProperty().addListener((observable, oldValue, newValue) -> {
             if(newValue.length() < 5) {
                 this.errorField.setText("Username must be at least 5 characters.");
@@ -110,7 +108,8 @@ public class EditUserPage implements BaseController {
         }
         DatabaseRequest.GET_ENTRIES.sendRequest(Users.FILE_NAME, records -> {
             if(records.isEmpty()) {
-                throw new IllegalArgumentException("Returned Record Shouldn't be empty. Couldn't find user with id " + this.id);
+                FXUtils.showBasicAlert(Alert.AlertType.ERROR, "Error", "Returned Record Shouldn't be empty. Couldn't find user with id " + this.id, ButtonType.OK);
+                return;
             }
             DatabaseRecord record = records.get(0);
             this.usernameField.setText(record.get(Users.USERNAME));
@@ -128,11 +127,13 @@ public class EditUserPage implements BaseController {
 
     @FXML
     public void createUser() {
-        this.consumer.consume(
+        if(this.consumer.consume(
             this.greenTick(this.usernameImage), this.usernameField.getText(),
             this.greenTick(this.emailImage), this.emailField.getText(),
             this.greenTick(this.passwordImage), PasswordUtils.generatePasswordHash(this.usernameField.getText(), this.passwordField.getText())
-        );
+        )) {
+            CafeDafyddMain.back();
+        }
     }
 
     private boolean greenTick(ImageView view) {
@@ -167,6 +168,6 @@ public class EditUserPage implements BaseController {
     }
 
     public interface ClickConsumer {
-        void consume(boolean hasUsername, String username, boolean hasEmail, String email, boolean hasPassword, String passwordHash);
+        boolean consume(boolean hasUsername, String username, boolean hasEmail, String email, boolean hasPassword, String passwordHash);
     }
 }

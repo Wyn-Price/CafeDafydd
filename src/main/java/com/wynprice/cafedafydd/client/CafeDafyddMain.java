@@ -100,6 +100,7 @@ public class CafeDafyddMain extends Application {
             pageHistory.push(page);
             controller = loader.getController();
             controller.onLoaded();
+            controller.resync();
             return Optional.of(new Scene(loaded, loaded.prefWidth(500), loaded.prefHeight(275)));
         } catch (IOException e) {
             log.error("Unable to load page " + page + " for file " + page.getFileName(), e);

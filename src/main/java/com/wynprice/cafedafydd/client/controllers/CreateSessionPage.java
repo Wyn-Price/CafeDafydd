@@ -23,7 +23,6 @@ public class CreateSessionPage implements BaseController {
 
     @Override
     public void onLoaded() {
-        this.resync();
         this.systemsComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
             this.gameListView.getItems().clear();
             for (Integer computerId : newValue.computerIds) {

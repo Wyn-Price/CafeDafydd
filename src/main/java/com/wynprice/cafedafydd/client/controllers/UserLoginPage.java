@@ -26,7 +26,6 @@ public class UserLoginPage implements BaseController {
 
     @Override
     public void onLoaded() {
-        this.resync();
         this.sessionList.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
             boolean disabled = newValue.intValue() < 0;
             if(newValue.intValue() >= 0) {

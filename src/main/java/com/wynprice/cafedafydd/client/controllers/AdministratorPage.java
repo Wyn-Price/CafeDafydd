@@ -44,7 +44,9 @@ public class AdministratorPage implements BaseController {
             e.setConsumer((hasUsername, username, hasEmail, email, hasPassword, passwordHash) -> {
                 if(hasUsername && hasEmail && hasPassword) {
                     CafeDafyddMain.getClient().getHandler().sendPacket(new PacketCreateUser(username, email, passwordHash, permissionLevel));
+                    return true;
                 }
+                return false;
             });
         });
     }

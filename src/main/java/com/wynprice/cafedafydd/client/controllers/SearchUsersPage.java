@@ -128,8 +128,7 @@ public class SearchUsersPage implements BaseController {
                         if(!form.isEmpty()) {
                             CafeDafyddMain.getClient().getHandler().sendPacket(new PacketTryEditDatabase(Users.FILE_NAME, item.id, form.getForm()));
                         }
-                        CafeDafyddMain.back();
-                        CafeDafyddMain.getController(BaseController.class).ifPresent(BaseController::resync);
+                        return true;
                     });
                 });
             }

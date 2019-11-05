@@ -25,8 +25,6 @@ public class SearchSessionsPage implements BaseController {
 
     @Override
     public void onLoaded() {
-        this.resync();
-
         this.paidStateBox.getSelectionModel().select(0);
 
         this.searchResult.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {

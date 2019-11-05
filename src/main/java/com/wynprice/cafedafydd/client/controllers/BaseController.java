@@ -2,7 +2,7 @@ package com.wynprice.cafedafydd.client.controllers;
 
 public interface BaseController {
     default void onLoaded() {
-        this.resync();
+        //NO-OP
     }
 
     default void resync() {
