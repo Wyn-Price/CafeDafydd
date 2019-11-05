@@ -9,14 +9,24 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.Stack;
 
-@Log4j2
 public class CafeDafyddMain extends Application {
+
+    static {
+        System.setProperty("logFilename", "client - " + DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+    }
+
+    //Don't use @Log4j2 here, as we need to set the filename before we reference the logger
+    private static final Logger log = LogManager.getLogger(CafeDafyddMain.class);
+
 
     /**
      * The current state

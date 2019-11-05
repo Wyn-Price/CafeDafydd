@@ -4,26 +4,31 @@ import com.wynprice.cafedafydd.common.netty.NetworkDataDecoder;
 import com.wynprice.cafedafydd.common.netty.NetworkDataEncoder;
 import com.wynprice.cafedafydd.server.database.Databases;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.DefaultMaxBytesRecvByteBufAllocator;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import javafx.application.Application;
 import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j2;
+
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 /**
  * The server handler used for the setup of the server -> client connections.
  * This is also the server main class that gets invoked by the JVM
  */
-@Log4j2
 public class CafeDafyddServerMain {
 
+    private static ChannelFuture endpoint;
+
     public static void main(String[] args) {
+        System.setProperty("logFilename", "server - " + DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+
+        Application.launch(CafeDafyddServerApplication.class);
+
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        new ServerBootstrap()
+        endpoint = new ServerBootstrap()
             .channel(NioServerSocketChannel.class)
             .childHandler(new ChannelInitializer<Channel>() {
                 @Override
@@ -39,11 +44,16 @@ public class CafeDafyddServerMain {
             .group(bossGroup, workerGroup)
             .bind(5671).syncUninterruptibly();
 
-        classloadClasses();
+        bootstrap();
+    }
+
+    public static void close() {
+        endpoint.channel().close().syncUninterruptibly();
+        Databases.close();
     }
 
     @SneakyThrows(ClassNotFoundException.class)
-    private static void classloadClasses() {
+    private static void bootstrap() {
         Class.forName(ServerNetworkHandler.class.getName());
         Class.forName(Databases.class.getName());
     }

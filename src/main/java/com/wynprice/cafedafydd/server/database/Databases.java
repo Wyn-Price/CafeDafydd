@@ -161,4 +161,14 @@ public abstract class Databases {
         }
         return Optional.empty();
     }
+
+    public static void close() {
+        for (Database database : DATABASES) {
+            try {
+                database.getBackupHandler().close();
+            } catch (Exception e) {
+                log.error("Unable to close backup handler for database " + database.getFilename(), e);
+            }
+        }
+    }
 }
