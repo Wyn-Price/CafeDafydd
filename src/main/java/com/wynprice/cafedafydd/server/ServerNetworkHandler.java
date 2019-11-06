@@ -197,11 +197,11 @@ public class ServerNetworkHandler extends NetworkHandler {
                 }
                 SearchRequirement[] form = this.replaceFormUserId(packet.getForm());
                 for (SearchRequirement requirement : form) {
-                    if(!(requirement instanceof NamedRecord)) {
+                    if(!(requirement instanceof SearchRequirement.DirectSearch)) {
                         log.warn("Can't set requirement of type " + requirement.id() + " to a record.");
                         continue;
                     }
-                    NamedRecord namedRecord = (NamedRecord) requirement;
+                    NamedRecord namedRecord = ((SearchRequirement.DirectSearch) requirement).getRecord();
 
                     boolean primary = ArrayUtils.asList(db.getPrimaryFields()).contains(namedRecord.getDefinition());
                     if(primary) {
