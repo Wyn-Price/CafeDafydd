@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -247,7 +248,7 @@ public abstract class Database {
             boolean inverted = false;
 
             FieldDefinition<?> field;
-            DatabaseField<?> value;
+            List<DatabaseField<?>> value;
 
 
             switch (requirement.id()) {
@@ -256,17 +257,16 @@ public abstract class Database {
                 case 0:
                     NamedRecord record = requirement instanceof NamedRecord ? (NamedRecord) requirement : ((SearchRequirement.DirectSearch) requirement).getRecord();
                     field = record.getDefinition();
-                    value = record.getRecord();
+                    value = Collections.singletonList(record.getRecord());
                     break;
 
                 case 2:
                     SearchRequirement.InlineSearch inline = (SearchRequirement.InlineSearch) requirement;
                     field = inline.getDefinition();
-                    Optional<DatabaseField> databaseField = Databases.getFromFile(inline.getRequestDatabase())
-                        .flatMap(d -> d.streamEntries(comparator, inline.getForm()).collect(UtilCollectors.toSingleEntry()))
-                        .map(r -> r.getRawField(inline.getRequestDatabaseField()));
-                    if(databaseField.isPresent()) {
-                        value = databaseField.get();
+                    Optional<Database> database = Databases.getFromFile(inline.getRequestDatabase());
+
+                    if(database.isPresent()) {
+                        value = database.get().streamEntries(comparator, inline.getForm()).map(r -> r.getRawField(inline.getRequestDatabaseField())).collect(Collectors.toList());
                     } else {
                         return Stream.empty();
                     }
@@ -281,8 +281,10 @@ public abstract class Database {
             //Get the found entries for this section of the form, and then go through the current list
             //and if the form entry is inverted, removed them if the found entries contains the entry, otherwise
             //remove the element if the found entries doesn't contain it.
-
-            List<DatabaseRecord> foundRecords = Algorithms.splicedBinarySearch(this.indexedRecords.get(field), r -> r.getRawField(field), value, (o1, o2) -> comparator.compare(o1.getAsCompareString(), o2.getAsCompareString()));
+            List<DatabaseRecord> foundRecords = new ArrayList<>();
+            for (DatabaseField<?> v : value) {
+                foundRecords.addAll(Algorithms.splicedBinarySearch(this.indexedRecords.get(field), r -> r.getRawField(field), v, (o1, o2) -> comparator.compare(o1.getAsCompareString(), o2.getAsCompareString())));
+            }
             list.removeIf(r -> finalInverted == foundRecords.contains(r));
         }
         return list.stream();

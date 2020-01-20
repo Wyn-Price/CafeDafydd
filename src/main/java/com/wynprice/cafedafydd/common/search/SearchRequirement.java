@@ -63,7 +63,7 @@ public interface SearchRequirement {
 
         private FieldDefinition definition;
         private String requestDatabase;
-        private FieldDefinition requestDatabaseField;
+        private FieldDefinition<?> requestDatabaseField;
         private SearchRequirement[] form;
 
         @Override
@@ -79,8 +79,8 @@ public interface SearchRequirement {
             this.definition = definitions.get(ByteBufUtils.readString(buf));
             this.requestDatabase = ByteBufUtils.readString(buf);
             this.requestDatabaseField = definitions.get(ByteBufUtils.readString(buf));
-            this.form = SearchRequirement.read(buf, definitions);
-        }
+            this.form = SearchRequirement.read(buf, this.requestDatabase);
+    }
 
         @Override
         public byte id() {
