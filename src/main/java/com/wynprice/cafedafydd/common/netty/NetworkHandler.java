@@ -56,6 +56,7 @@ public class NetworkHandler extends SimpleChannelInboundHandler {
                         Object packet = this.handleQueue.poll();
                         try {
                             this.handlePacket(packet);
+                            log.info("Handled packet: {}", packet)
                         } catch (Exception e) {
                             log.error("Error while handling packet " + packet, e);
                         }
