@@ -74,25 +74,25 @@ public class DateUtils {
     public static String getStringDifference(Date d1, Date d2) {
         long time = d1.getTime() - d2.getTime();
 
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(time);
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(time);
-        long hours = TimeUnit.MILLISECONDS.toHours(time);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(time) % 60;
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(time) % 60;
+        long hours = TimeUnit.MILLISECONDS.toHours(time) % 24;
         long days = TimeUnit.MILLISECONDS.toDays(time); //Will anyone ever game for over days?
 
 
         List<String> resultList = new LinkedList<>();
 
         if(days != 0) {
-            resultList.add(days + " day" + (Math.abs(days) == 1 ? "" : "s"));
+            resultList.add(days + " day" + (days == 1 ? "" : "s"));
         }
         if(hours != 0) {
-            resultList.add(hours % 24 + " hour" + (Math.abs(hours) == 1 ? "" : "s"));
+            resultList.add(hours + " hour" + (hours == 1 ? "" : "s"));
         }
         if(minutes != 0) {
-            resultList.add(minutes % 60 + " minute" + (Math.abs(minutes) == 1 ? "" : "s"));
+            resultList.add(minutes + " minute" + (minutes == 1 ? "" : "s"));
         }
         if(seconds != 0) {
-            resultList.add(seconds % 60 + " second" + (Math.abs(seconds) == 1 ? "" : "s"));
+            resultList.add(seconds + " second" + (seconds == 1 ? "" : "s"));
         }
 
 
