@@ -51,7 +51,7 @@ public class CafeDafyddMain extends Application {
 
     public static void main(String[] args) {
         //Create a new client and connect to the server, then launch the gui application
-        client = new CafeDayfddClient("localhost");
+        client = new CafeDayfddClient(args.length == 0 ? "localhost" : args[0]);
         launch(CafeDafyddMain.class);
     }
 
