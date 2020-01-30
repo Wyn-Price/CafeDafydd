@@ -39,6 +39,10 @@ public class ChangePasswordPage implements BaseController {
             FXUtils.showBasicAlert(Alert.AlertType.INFORMATION, "Internal Error", "Username was null. This happens when the client is not logged in. Something has gone very wrong.", ButtonType.OK);
             return;
         }
+        if(!this.passwordField.getText().equals(this.repeatPasswordField.getText())) {
+            FXUtils.showBasicAlert(Alert.AlertType.ERROR, "Input Error", "Passwords do not match", ButtonType.OK);
+            return;
+        }
         CafeDafyddMain.getClient().getHandler().sendPacket(new PacketChangePassword(generatePasswordHash(username, this.currentPassword.getText()), generatePasswordHash(username, this.passwordField.getText())));
     }
 
