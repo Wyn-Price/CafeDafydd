@@ -46,7 +46,7 @@ public class NetworkHandleScanner {
                         }
                     });
                 } else {
-                    builder.append("Too many arguments!");
+                    builder.append("Invalid argument count! Expected 1, found " + method.getParameterCount());
                 }
                 log.info(builder);
             }
