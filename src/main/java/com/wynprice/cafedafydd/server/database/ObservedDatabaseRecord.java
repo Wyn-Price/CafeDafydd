@@ -21,7 +21,7 @@ public class ObservedDatabaseRecord extends DatabaseRecord {
 
     @Override
     public <T> void set(FieldDefinition<T> definition, T value) {
-        if(Arrays.asList(this.database.getPrimaryFields()).contains(definition) && this.database.hasAllEntries(definition.create(value))) {
+        if(Arrays.asList(this.database.getPrimaryFields()).contains(definition) && this.database.getEntries(definition.create(value)).anyMatch(r -> r != this)) {
             throw new IllegalArgumentException("Primary field '" + definition + "' with value '" + value + "' already exists in database " + this.database.getFilename());
         }
         super.set(definition, value);
