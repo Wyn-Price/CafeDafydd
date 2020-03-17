@@ -79,7 +79,7 @@ public class SearchSessionsPage implements BaseController {
             if(form.isEmpty()) {
                 this.searchResult.getItems().clear();
             } else {
-                DatabaseRequest.SEARCH_ENTRIES.sendRequest(Sessions.FILE_NAME, records -> {
+                DatabaseRequest.GET_ENTRIES.sendRequest(Sessions.FILE_NAME, records -> {
                     this.searchResult.getItems().clear();
                     for (DatabaseRecord record : records) {
                         this.searchResult.getItems().add(Session.fromRecord(record));
